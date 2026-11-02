@@ -9,7 +9,10 @@ description = "Explain a public GitHub repo visually and brief the release impac
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "tree-sitter>=0.25.2,<0.26",  # 0.26.0 segfaults on some Java files, see PROJECT_NOTES.md
+    "tree-sitter-java>=0.23.5",
+]
 
 [project.scripts]
 rib = "release_impact_brief.cli:main"

@@ -1,0 +1,45 @@
+{
+  "repo": "https://github.com/spring-projects/spring-petclinic",
+  "commit_sha": "500158f732419217507c7656904b8e6aa1bcc0d6",
+  "written": "2026-11-01, by reading src/main/java at this commit by hand, before the tool could extract endpoints or entities",
+  "package": "org.springframework.samples.petclinic",
+  "endpoints": [
+    { "method": "GET", "path": "/", "handler": "system.WelcomeController#welcome" },
+    { "method": "GET", "path": "/oups", "handler": "system.CrashController#triggerException" },
+    { "method": "GET", "path": "/owners/new", "handler": "owner.OwnerController#initCreationForm" },
+    { "method": "POST", "path": "/owners/new", "handler": "owner.OwnerController#processCreationForm" },
+    { "method": "GET", "path": "/owners/find", "handler": "owner.OwnerController#initFindForm" },
+    { "method": "GET", "path": "/owners", "handler": "owner.OwnerController#processFindForm" },
+    { "method": "GET", "path": "/owners/{ownerId}/edit", "handler": "owner.OwnerController#initUpdateOwnerForm" },
+    { "method": "POST", "path": "/owners/{ownerId}/edit", "handler": "owner.OwnerController#processUpdateOwnerForm" },
+    { "method": "GET", "path": "/owners/{ownerId}", "handler": "owner.OwnerController#showOwner" },
+    { "method": "GET", "path": "/owners/{ownerId}/pets/new", "handler": "owner.PetController#initCreationForm" },
+    { "method": "POST", "path": "/owners/{ownerId}/pets/new", "handler": "owner.PetController#processCreationForm" },
+    { "method": "GET", "path": "/owners/{ownerId}/pets/{petId}/edit", "handler": "owner.PetController#initUpdateForm" },
+    { "method": "POST", "path": "/owners/{ownerId}/pets/{petId}/edit", "handler": "owner.PetController#processUpdateForm" },
+    { "method": "GET", "path": "/owners/{ownerId}/pets/{petId}/visits/new", "handler": "owner.VisitController#initNewVisitForm" },
+    { "method": "POST", "path": "/owners/{ownerId}/pets/{petId}/visits/new", "handler": "owner.VisitController#processNewVisitForm" },
+    { "method": "GET", "path": "/vets.html", "handler": "vet.VetController#showVetList" },
+    { "method": "GET", "path": "/vets", "handler": "vet.VetController#showResourcesVetList" }
+  ],
+  "entities": [
+    { "class": "owner.Owner", "table": "owners", "extends": "model.Person" },
+    { "class": "owner.Pet", "table": "pets", "extends": "model.NamedEntity" },
+    { "class": "owner.PetType", "table": "types", "extends": "model.NamedEntity" },
+    { "class": "owner.Visit", "table": "visits", "extends": "model.BaseEntity" },
+    { "class": "vet.Vet", "table": "vets", "extends": "model.Person" },
+    { "class": "vet.Specialty", "table": "specialties", "extends": "model.NamedEntity" }
+  ],
+  "mapped_superclasses": ["model.BaseEntity", "model.NamedEntity", "model.Person"],
+  "relations": [
+    { "from": "owner.Owner", "field": "pets", "kind": "OneToMany", "to": "owner.Pet" },
+    { "from": "owner.Pet", "field": "type", "kind": "ManyToOne", "to": "owner.PetType" },
+    { "from": "owner.Pet", "field": "visits", "kind": "OneToMany", "to": "owner.Visit" },
+    { "from": "vet.Vet", "field": "specialties", "kind": "ManyToMany", "to": "vet.Specialty" }
+  ],
+  "repositories": [
+    { "interface": "owner.OwnerRepository", "entity": "owner.Owner", "extends": "JpaRepository" },
+    { "interface": "owner.PetTypeRepository", "entity": "owner.PetType", "extends": "JpaRepository" },
+    { "interface": "vet.VetRepository", "entity": "vet.Vet", "extends": "Repository" }
+  ]
+}

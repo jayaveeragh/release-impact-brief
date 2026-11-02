@@ -142,45 +142,57 @@ class FactStore:
         ).fetchone()
         return int(row[0])
 
+    def add_facts(self, snapshot_id: int, nodes: Iterable[Node], edges: Iterable[Edge]) -> None:
+        """Insert nodes and edges in one transaction, so a snapshot is never half-written."""
+        with self._conn:
+            self._insert_nodes(snapshot_id, nodes)
+            self._insert_edges(snapshot_id, edges)
+
     def add_nodes(self, snapshot_id: int, nodes: Iterable[Node]) -> None:
         with self._conn:
-            self._conn.executemany(
-                "INSERT INTO nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                [
-                    (
-                        snapshot_id,
-                        n.id,
-                        n.kind.value,
-                        n.name,
-                        n.file,
-                        n.start_line,
-                        n.end_line,
-                        n.language,
-                        json.dumps(n.attributes, sort_keys=True),
-                    )
-                    for n in nodes
-                ],
-            )
+            self._insert_nodes(snapshot_id, nodes)
 
     def add_edges(self, snapshot_id: int, edges: Iterable[Edge]) -> None:
         with self._conn:
-            self._conn.executemany(
-                "INSERT INTO edges VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                [
-                    (
-                        snapshot_id,
-                        e.id,
-                        e.src,
-                        e.dst,
-                        e.kind,
-                        e.confidence.value,
-                        e.evidence_file,
-                        e.evidence_line,
-                        e.resolver,
-                    )
-                    for e in edges
-                ],
-            )
+            self._insert_edges(snapshot_id, edges)
+
+    def _insert_nodes(self, snapshot_id: int, nodes: Iterable[Node]) -> None:
+        self._conn.executemany(
+            "INSERT INTO nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                (
+                    snapshot_id,
+                    n.id,
+                    n.kind.value,
+                    n.name,
+                    n.file,
+                    n.start_line,
+                    n.end_line,
+                    n.language,
+                    json.dumps(n.attributes, sort_keys=True),
+                )
+                for n in nodes
+            ],
+        )
+
+    def _insert_edges(self, snapshot_id: int, edges: Iterable[Edge]) -> None:
+        self._conn.executemany(
+            "INSERT INTO edges VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                (
+                    snapshot_id,
+                    e.id,
+                    e.src,
+                    e.dst,
+                    e.kind,
+                    e.confidence.value,
+                    e.evidence_file,
+                    e.evidence_line,
+                    e.resolver,
+                )
+                for e in edges
+            ],
+        )
 
     def get_node(self, snapshot_id: int, node_id: str) -> Node | None:
         row = self._conn.execute(

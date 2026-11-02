@@ -4,22 +4,18 @@ Last updated: 2026-11-01
 
 ## Where we are
 
-Phase 0: Foundation, all steps done. Awaiting owner commit for step 3.
+Phase 0: Foundation, done (ac8256d, 88eaa5b, 92a782b). Done criterion met: `rib fetch` prints SHA and file counts for both test repos.
+
+Phase 1: Java facts.
 
 | Step | State |
 |---|---|
-| 1. Skeleton: lint, tests, CI, README, license, docs | done (ac8256d) |
-| 2. Fact store schema with tests | done (88eaa5b) |
-| 3. Safe GitHub fetch + `rib fetch` CLI | done, awaiting owner commit |
+| 1. Adapter interface, Java parser (classes, methods, fields, imports), `rib facts`, answer key | done, awaiting owner commit |
+| 2. Call resolution with confidence, interface→implementation, Spring injection; library calls listed, not traced | next |
+| 3. Spring endpoints | not started |
+| 4. JPA entities and repositories; check against answer key | not started |
 
-Done criterion met on 2026-11-01: `rib fetch` on both test repos prints SHA and file counts, and the temp clone is removed afterwards.
-
-| Repo | Commit | Files | .java |
-|---|---|---|---|
-| spring-projects/spring-petclinic | 500158f732419217507c7656904b8e6aa1bcc0d6 | 132 | 50 |
-| spring-petclinic/spring-petclinic-microservices | e8b747ab522721076cacb5cf688eb8a54ba8c5c9 | 200 | 64 |
-
-These SHAs are the HEADs on 2026-11-01. They are candidates for pinning as Phase 1 fixtures.
+Phase 1 is done when `rib facts` on spring-petclinic @ `500158f` matches [tests/fixtures/spring-petclinic/expected.json](../tests/fixtures/spring-petclinic/expected.json).
 
 ## Working agreement
 
@@ -28,4 +24,4 @@ These SHAs are the HEADs on 2026-11-01. They are candidates for pinning as Phase
 
 ## Next
 
-Phase 1 (Java facts): propose a plan and wait for approval before coding.
+Phase 1, step 2: call edges between user-defined code, with `exact` / `likely` / `guess` confidence.

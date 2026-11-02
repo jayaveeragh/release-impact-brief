@@ -10,10 +10,11 @@ Design rule: **facts first, creativity on top.** Deterministic parsing produces 
 
 | Phase | Commit | What it added |
 |---|---|---|
-| 0 | `ac8256d` | Project skeleton: lint (ruff), strict types (mypy), tests (pytest), CI, MIT license, docs |
-| 0 | `88eaa5b` | Fact store: SQLite nodes and edges keyed by repo + commit SHA, with confidence labels (`exact`, `likely`, `guess`, `unknown`) |
-| 0 | `92a782b` | Safe fetch: strict GitHub URL check, one pinned commit cloned with locked-down git, size limits, automatic cleanup, `rib fetch` CLI |
-| 1 | _next commit_ | Java parser (Tree-sitter): classes, interfaces, enums, records, methods, fields, imports with file and line; `rib facts` CLI cached by commit SHA; hand-written answer key for spring-petclinic. Also adds PROJECT_NOTES.md |
+| 0 | `c6d1886` | Project skeleton: lint (ruff), strict types (mypy), tests (pytest), CI, MIT license, docs |
+| 0 | `e4e60a5` | Fact store: SQLite nodes and edges keyed by repo + commit SHA, with confidence labels (`exact`, `likely`, `guess`, `unknown`) |
+| 0 | `b47eb1a` | Safe fetch: strict GitHub URL check, one pinned commit cloned with locked-down git, size limits, automatic cleanup, `rib fetch` CLI |
+| 1 | `28b0edb` | Java parser (Tree-sitter): classes, interfaces, enums, records, methods, fields, imports with file and line; `rib facts` CLI cached by commit SHA; hand-written answer key for spring-petclinic. Also adds PROJECT_NOTES.md |
+| 1 | _next commit_ | Call graph: `calls` edges between your own code with `exact` / `likely` / `guess` confidence; `extends`, `implements`, `overrides`; Spring `injects` (constructor, `@Autowired`, Lombok). Library calls (JDK, Spring) are listed on the method, never traced; unresolvable calls are listed, never guessed |
 
 ## Development
 

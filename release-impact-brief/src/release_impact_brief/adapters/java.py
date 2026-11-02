@@ -15,6 +15,7 @@ from tree_sitter import Language, Parser
 from tree_sitter import Node as TsNode
 
 from release_impact_brief.adapters import Extraction
+from release_impact_brief.adapters.java_calls import CallSite, JavaResolver
 from release_impact_brief.facts import Confidence, Edge, Node, NodeKind
 
 _LANGUAGE = Language(tree_sitter_java.language())
@@ -68,6 +69,25 @@ def _type_list(node: TsNode | None) -> list[str]:
     return [_compact(_text(t)) for t in node.named_children]
 
 
+def _receiver(obj: TsNode | None, inner: dict[int, CallSite]) -> tuple[str, str, CallSite | None]:
+    """Classify the object a method is called on: (receiver kind, text, inner call)."""
+    if obj is None:
+        return "implicit", "", None
+    if obj.type in ("this", "super"):
+        return obj.type, "", None
+    if obj.type == "identifier":
+        return "name", _text(obj), None
+    if obj.type == "field_access" and _text(obj.child_by_field_name("object")) == "this":
+        return "field", _text(obj.child_by_field_name("field")), None
+    if obj.type == "method_invocation":
+        return "call", "", inner.get(obj.id)
+    if obj.type == "object_creation_expression":
+        return "new", _compact(_text(obj.child_by_field_name("type"))), None
+    if obj.type == "parenthesized_expression" and obj.named_children:
+        return _receiver(obj.named_children[0], inner)
+    return "other", "", None
+
+
 def _params(params: TsNode | None) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for p in params.named_children if params is not None else []:
@@ -89,8 +109,18 @@ def _params(params: TsNode | None) -> list[dict[str, Any]]:
 
 
 class _FileExtractor:
-    def __init__(self, rel: str, tree_root: TsNode, out: Extraction, seen: set[str]) -> None:
+    def __init__(
+        self,
+        rel: str,
+        tree_root: TsNode,
+        out: Extraction,
+        seen: set[str],
+        sites: list[CallSite],
+        locals_: dict[str, dict[str, str]],
+    ) -> None:
         self.rel = rel
+        self.sites = sites
+        self.locals = locals_
         self.out = out
         self.seen = seen
         self.package = ""
@@ -211,6 +241,45 @@ class _FileExtractor:
             class_id,
             start,
         )
+        self.locals[method_id] = {p["name"]: p["type"] for p in params}
+        body = decl.child_by_field_name("body")
+        if body is not None:
+            self._body(body, method_id, class_id)
+
+    def _body(self, body: TsNode, method_id: str, class_id: str) -> None:
+        """Record call sites and local variable types inside a method body."""
+        local = self.locals[method_id]
+        inner: dict[int, CallSite] = {}
+
+        def visit(n: TsNode) -> None:
+            for child in n.named_children:
+                visit(child)  # children first, so a receiver call exists before its outer call
+            if n.type == "local_variable_declaration":
+                type_ = _compact(_text(n.child_by_field_name("type")))
+                for d in n.children_by_field_name("declarator"):
+                    local[_text(d.child_by_field_name("name"))] = type_
+            elif n.type in ("enhanced_for_statement", "resource", "catch_formal_parameter"):
+                type_node = n.child_by_field_name("type") or next(
+                    (c for c in n.named_children if c.type == "catch_type"), None
+                )
+                if type_node is not None and n.child_by_field_name("name") is not None:
+                    local[_text(n.child_by_field_name("name"))] = _compact(_text(type_node))
+            elif n.type in ("method_invocation", "object_creation_expression"):
+                args = n.child_by_field_name("arguments")
+                arity = len(args.named_children) if args is not None else 0
+                line = n.start_point.row + 1
+                if n.type == "method_invocation":
+                    kind, text, inner_site = _receiver(n.child_by_field_name("object"), inner)
+                    site = CallSite(method_id, class_id, self.rel, line,
+                                    _text(n.child_by_field_name("name")), arity, "call",
+                                    kind, text, inner_site)  # fmt: skip
+                else:
+                    type_ = _compact(_text(n.child_by_field_name("type")))
+                    site = CallSite(method_id, class_id, self.rel, line, type_, arity, "new")
+                inner[n.id] = site
+                self.sites.append(site)
+
+        visit(body)
 
     def _field(
         self,
@@ -253,10 +322,13 @@ class JavaAdapter:
     def extract(self, root: Path, files: Sequence[str]) -> Extraction:
         out = Extraction()
         seen: set[str] = set()
+        sites: list[CallSite] = []
+        locals_: dict[str, dict[str, str]] = {}
         for rel in files:
             tree = self._parser.parse((root / rel).read_bytes())
             if tree.root_node.has_error:
                 out.files_with_errors.append(rel)
-            _FileExtractor(rel, tree.root_node, out, seen)
+            _FileExtractor(rel, tree.root_node, out, seen, sites, locals_)
             out.files_parsed += 1
+        JavaResolver(out, sites, locals_).run()
         return out

@@ -8,9 +8,9 @@ Phase 0: Foundation.
 
 | Step | State |
 |---|---|
-| 1. Skeleton: lint, tests, CI, README, license, docs | done, awaiting owner commit |
-| 2. Fact store schema with tests | next |
-| 3. Safe GitHub fetch + `rib fetch` CLI | not started |
+| 1. Skeleton: lint, tests, CI, README, license, docs | done (ac8256d) |
+| 2. Fact store schema with tests | done, awaiting owner commit |
+| 3. Safe GitHub fetch + `rib fetch` CLI | next |
 
 Phase 0 is done when `rib fetch <github url>` fetches a repo safely and prints its commit SHA and file counts.
 
@@ -21,4 +21,4 @@ Phase 0 is done when `rib fetch <github url>` fetches a repo safely and prints i
 
 ## Next
 
-Commit 2: SQLite fact store (nodes and edges, keyed by repo + commit SHA, confidence labels).
+Commit 3: safe GitHub fetch (URL validation, pinned shallow clone, size/file limits, cleanup) and a `rib fetch` CLI that prints commit SHA and file counts.

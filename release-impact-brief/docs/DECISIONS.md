@@ -11,3 +11,9 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 - 2026-11-01 — Fetch by cloning one pinned commit to a local temp folder, not per-file GitHub API calls — one request vs thousands; unauthenticated API allows 60 requests/hour — active
 - 2026-11-01 — Proposed: run a small evaluation (about 5 real fixes) before Phase 7, full set of about 30 in Phase 8 — so the impact design is guided by data, not built blind — proposed, revisit before Phase 7
 - 2026-11-01 — Note: Defects4J is mostly library code (no Spring endpoints), so it tests method-level impact only; endpoint/flow impact needs real fix commits from Spring repos — unverified assumption, confirm in Phase 8 — active
+- 2026-11-01 — Fact store uses stdlib `sqlite3`, no ORM — three small tables; an ORM adds a dependency without saving code — active
+- 2026-11-01 — Node kinds and confidence labels enforced twice: Python enums and SQL CHECK constraints — the DB stays honest even if a future code path skips the dataclasses — active
+- 2026-11-01 — Edges have their own IDs — view specs reference edges as `fact:<id>` (see brief example `fact:edge-91`) — active
+- 2026-11-01 — Edges must point to existing nodes in the same snapshot (composite foreign keys) — unresolved calls must target an explicit `external_system` / unknown node, never a dangling ID — active
+- 2026-11-01 — Edge `kind` is free text for now, not an enum — the needed set (calls, implements, injects, handles, …) isn't known until Phase 1 resolvers exist; tighten to an enum then — active, revisit in Phase 1
+- 2026-11-01 — Commit SHA must be a full 40-char lowercase hex — short SHAs can become ambiguous, breaking the cache key — active

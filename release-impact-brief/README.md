@@ -18,6 +18,14 @@ python3 -m venv .venv
 .venv/bin/pytest
 ```
 
+## Usage
+
+```bash
+.venv/bin/rib fetch https://github.com/spring-projects/spring-petclinic [--ref <branch|tag|sha>]
+```
+
+This fetches one pinned commit into a temp folder (nothing from the repo is executed), prints the commit SHA and file counts, then deletes the clone.
+
 ## Docs
 
 - [docs/STATUS.md](docs/STATUS.md): where the project is and what's next

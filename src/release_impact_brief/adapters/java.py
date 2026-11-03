@@ -16,6 +16,7 @@ from tree_sitter import Node as TsNode
 
 from release_impact_brief.adapters import Extraction
 from release_impact_brief.adapters.java_calls import CallSite, JavaResolver
+from release_impact_brief.adapters.java_spring import add_endpoints
 from release_impact_brief.facts import Confidence, Edge, Node, NodeKind
 
 _LANGUAGE = Language(tree_sitter_java.language())
@@ -58,6 +59,39 @@ def _modifiers(decl: TsNode) -> tuple[list[str], list[str]]:
             else:
                 keywords.append(_text(mod))
     return keywords, annotations
+
+
+def _annotation_args(decl: TsNode) -> dict[str, dict[str, list[str]]]:
+    """Arguments of each annotation with arguments, as raw source text per element.
+
+    `@GetMapping({"/a", "/b"})` -> {"GetMapping": {"value": ['"/a"', '"/b"']}}. String
+    literals keep their quotes, so a literal can be told apart from a constant.
+    """
+    out: dict[str, dict[str, list[str]]] = {}
+    for child in decl.children:
+        if child.type != "modifiers":
+            continue
+        for mod in child.children:
+            args = mod.child_by_field_name("arguments") if mod.type == "annotation" else None
+            if args is None:
+                continue
+            values: dict[str, list[str]] = {}
+            for arg in args.named_children:
+                if arg.type == "element_value_pair":
+                    key = _text(arg.child_by_field_name("key"))
+                    value = arg.child_by_field_name("value")
+                else:
+                    key, value = "value", arg
+                if value is None:
+                    continue
+                items = (
+                    value.named_children
+                    if value.type == "element_value_array_initializer"
+                    else [value]
+                )
+                values[key] = [_compact(_text(i)) for i in items]
+            out[_text(mod.child_by_field_name("name"))] = values
+    return out
 
 
 def _type_list(node: TsNode | None) -> list[str]:
@@ -104,7 +138,10 @@ def _params(params: TsNode | None) -> list[dict[str, Any]]:
             type_ = _compact(_text(types[0])) + "..."
         else:
             continue
-        out.append({"name": name, "type": type_, "annotations": annotations})
+        param: dict[str, Any] = {"name": name, "type": type_, "annotations": annotations}
+        if args := _annotation_args(p):
+            param["annotation_args"] = args
+        out.append(param)
     return out
 
 
@@ -186,6 +223,8 @@ class _FileExtractor:
             "extends": extends,
             "implements": _type_list(decl.child_by_field_name("interfaces")),
         }
+        if args := _annotation_args(decl):
+            attributes["annotation_args"] = args
         if parent_id is None:
             attributes["imports"] = self.imports
         self._add(
@@ -236,6 +275,8 @@ class _FileExtractor:
             "annotations": annotations,
             "constructor": is_constructor,
         }
+        if args := _annotation_args(decl):
+            attributes["annotation_args"] = args
         self._add(
             Node(method_id, NodeKind.METHOD, name, self.rel, start, end, "java", attributes),
             class_id,
@@ -331,4 +372,5 @@ class JavaAdapter:
             _FileExtractor(rel, tree.root_node, out, seen, sites, locals_)
             out.files_parsed += 1
         JavaResolver(out, sites, locals_).run()
+        add_endpoints(out)
         return out

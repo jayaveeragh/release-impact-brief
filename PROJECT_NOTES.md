@@ -11,6 +11,8 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 
 ## Measured values
 
+- 2026-11-02 — Endpoints spring-petclinic @ `500158f`: 17 found, 17/17 match the hand-written answer key (verb, path, handler) — `test_petclinic_endpoints_match_hand_written_answer_key` (network test) — active
+- 2026-11-02 — Endpoints spring-petclinic-microservices @ `e8b747a`: 16 found across gateway, customers, visits, vets, genai; spot-checked against `grep` of the mapping annotations (incl. literal `*` wildcards, paths without leading `/`, fallback GET+POST) — no answer key for this repo yet — active
 - 2026-11-01 — Call graph spring-petclinic @ `500158f`: calls 278 exact / 38 likely / 2 guess (both guesses in tests); injects 13; extends 8; main code: 93 methods, 119 library-call labels, 3 unresolved (lambda-param receiver ×2, class literal ×1) — measured with a scratch script over `extract_all` — active
 - 2026-11-01 — Call graph spring-petclinic-microservices @ `e8b747a`: calls 108 exact / 16 likely / 13 guess; injects 10; implements 1 (`OwnerEntityMapper` → `Mapper`), overrides 1 (likely, generic params) — same method — active
 - 2026-11-01 — Hand spot check (petclinic): `OwnerController#showOwner` → `OwnerRepository#findById` exact (petclinic declares findById itself); `PetController#processUpdateForm` → 6 exact calls incl. inherited `BaseEntity#getId`; `VisitController#loadPetWithVisit` → `getPet(petId)` with int arg linked to both 1-arg overloads as likely (true target is `getPet(Integer)`) — read source by hand — active
@@ -22,11 +24,17 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 
 ## Trade-offs and known gaps
 
+- 2026-11-02 — Endpoint gaps: Spring Cloud Gateway routes in YAML (Phase 2), functional routes (`RouterFunction`), mappings declared on interfaces (e.g. Feign/declarative interfaces implemented by controllers), meta-annotations (custom `@MyGetMapping`), `consumes`/`produces`/`params`/`headers` conditions, constants in paths (kept as `<expr>`, marked guess) — not seen in either petclinic repo — active
+
+- 2026-11-01 — Fact cache is keyed by repo + SHA only, not by extractor version: after changing the extractor, old snapshots are served without the new facts until `.rib/` is deleted — found when call edges were added — active, fix proposed (add extractor version to the key)
+
 - 2026-11-01 — Call resolution gaps (known, not handled): argument types (overloads with same argument count → `likely` to each), lambda parameters and `var` locals (type unknown), method references (`Owner::getName`), calls on class literals (`Pet.class.x()`), field initializer calls, local/anonymous classes, generic type parameters (`T`), inherited fields only one level up. Local variables are method-wide, not block-scoped (a reused name in two blocks takes the last type) — accepted for V1; all show up as `guess`/`unresolved_calls`, not as false `exact` — active
 - 2026-11-01 — Total-size limit is checked after download, not during it; the 120 s timeout is the only bound on a huge download — a GitHub API size pre-check would use one of the 60 unauthenticated requests/hour — active, revisit if it matters
 - 2026-11-01 — Tree-sitter over a full Java type resolver (e.g. JavaParser symbol solver) — the resolver is more accurate but needs a JVM; the brief puts compiler-based indexing after V1 — active
 
 ## Surprises
+
+- 2026-11-02 — The git repo is rooted at `~/account2`, not at `~/account2/release-impact-brief`: every commit since the first stores files under `release-impact-brief/`. On GitHub the README isn't shown on the repo page and CI has never run (workflows are only read from `.github/` at the repo root) — found when the session's working directory reported `~/account2` as a git repo — open, owner to choose a fix
 
 - 2026-11-01 — Tree-sitter starts a declaration's line range at its first annotation, not at the `class`/method keyword (e.g. `@Entity` on line 6, `class Owner` on line 8 → start_line 6) — found when my hand-counted test expectations were off by 2 — active; source links will include annotations, which is fine
 - 2026-11-01 — For a missing or private repo, GitHub asks for credentials instead of returning 404, so git fails with "terminal prompts disabled"; mapped to "Repository not found or not public." — found while testing `rib fetch` — active

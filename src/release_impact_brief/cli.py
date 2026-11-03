@@ -49,7 +49,11 @@ def _facts(args: argparse.Namespace) -> int:
         print(f"edges:       {len(store.edges(snap))}")
         print()
         for n in nodes:
-            print(f"{n.id}  {n.file}:{n.start_line}")
+            if n.kind == NodeKind.ENDPOINT:
+                handler = n.attributes["handler"].removeprefix("java:method:")
+                print(f"{n.name:<50} -> {handler}  {n.file}:{n.start_line}")
+            else:
+                print(f"{n.id}  {n.file}:{n.start_line}")
     finally:
         store.close()
     return 0

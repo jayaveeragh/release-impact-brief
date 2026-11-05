@@ -3,7 +3,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from release_impact_brief.facts import Confidence, Edge, FactStore, Node, NodeKind
+from release_impact_brief.facts import Confidence, Edge, EdgeKind, FactStore, Node, NodeKind
 
 SHA_A = "a" * 40
 SHA_B = "b" * 40
@@ -34,7 +34,7 @@ def call(edge_id: str, src: str, dst: str) -> Edge:
         id=edge_id,
         src=src,
         dst=dst,
-        kind="calls",
+        kind=EdgeKind.CALLS,
         confidence=Confidence.EXACT,
         evidence_file="src/Demo.java",
         evidence_line=12,
@@ -98,6 +98,11 @@ def test_rejects_unknown_confidence_label() -> None:
         Edge("e-1", "m-1", "m-2", "calls", "probably", "f", 1, "test")  # type: ignore[arg-type]
 
 
+def test_rejects_unknown_edge_kind() -> None:
+    with pytest.raises(ValueError):
+        Edge("e-1", "m-1", "m-2", "uses", Confidence.EXACT, "f", 1, "test")  # type: ignore[arg-type]
+
+
 def test_rejects_unknown_node_kind() -> None:
     with pytest.raises(ValueError):
         Node("x-1", "widget", "x", "f", 1, 1, "java")  # type: ignore[arg-type]
@@ -131,5 +136,15 @@ def test_database_rejects_bad_confidence_even_without_python_checks(store: FactS
     with pytest.raises(sqlite3.IntegrityError):
         store._conn.execute(
             "INSERT INTO edges VALUES (?, 'e-1', 'm-1', 'm-2', 'calls', '90%', 'f', 1, 'raw')",
+            (snap,),
+        )
+
+
+def test_database_rejects_bad_edge_kind_even_without_python_checks(store: FactStore) -> None:
+    snap = store.snapshot(REPO, SHA_A)
+    store.add_nodes(snap, [method("m-1"), method("m-2", 30)])
+    with pytest.raises(sqlite3.IntegrityError):
+        store._conn.execute(
+            "INSERT INTO edges VALUES (?, 'e-1', 'm-1', 'm-2', 'uses', 'exact', 'f', 1, 'raw')",
             (snap,),
         )

@@ -16,8 +16,9 @@ from tree_sitter import Node as TsNode
 
 from release_impact_brief.adapters import Extraction
 from release_impact_brief.adapters.java_calls import CallSite, JavaResolver
+from release_impact_brief.adapters.java_jpa import add_entities
 from release_impact_brief.adapters.java_spring import add_endpoints
-from release_impact_brief.facts import Confidence, Edge, Node, NodeKind
+from release_impact_brief.facts import Confidence, Edge, EdgeKind, Node, NodeKind
 
 _LANGUAGE = Language(tree_sitter_java.language())
 _RESOLVER = "java-syntax"
@@ -192,7 +193,7 @@ class _FileExtractor:
                     id=f"contains:{parent_id}>{node.id}",
                     src=parent_id,
                     dst=node.id,
-                    kind="contains",
+                    kind=EdgeKind.CONTAINS,
                     confidence=Confidence.EXACT,
                     evidence_file=self.rel,
                     evidence_line=line,
@@ -235,7 +236,8 @@ class _FileExtractor:
 
         if decl.type == "record_declaration":
             for p in _params(decl.child_by_field_name("parameters")):
-                self._field(class_id, p["name"], p["type"], [], p["annotations"], decl, record=True)
+                self._field(class_id, p["name"], p["type"], [], p["annotations"], decl, record=True,
+                            args=p.get("annotation_args"))  # fmt: skip
 
         body = decl.child_by_field_name("body")
         members = list(body.named_children) if body is not None else []
@@ -250,9 +252,12 @@ class _FileExtractor:
             elif member.type in _FIELD_DECLS:
                 keywords, annotations = _modifiers(member)
                 type_ = _compact(_text(member.child_by_field_name("type")))
+                args = _annotation_args(member)
                 for declarator in member.children_by_field_name("declarator"):
                     field_name = _text(declarator.child_by_field_name("name"))
-                    self._field(class_id, field_name, type_, keywords, annotations, member)
+                    self._field(
+                        class_id, field_name, type_, keywords, annotations, member, args=args
+                    )
             elif member.type == "enum_constant":
                 const = _text(member.child_by_field_name("name"))
                 self._field(class_id, const, name, [], [], member, enum_constant=True)
@@ -333,6 +338,7 @@ class _FileExtractor:
         *,
         record: bool = False,
         enum_constant: bool = False,
+        args: dict[str, dict[str, list[str]]] | None = None,
     ) -> None:
         owner = class_id.removeprefix("java:class:")
         field_id = self._unique(f"java:field:{owner}#{name}")
@@ -342,6 +348,8 @@ class _FileExtractor:
             "modifiers": keywords,
             "annotations": annotations,
         }
+        if args:
+            attributes["annotation_args"] = args
         if record:
             attributes["record_component"] = True
         if enum_constant:
@@ -371,6 +379,8 @@ class JavaAdapter:
                 out.files_with_errors.append(rel)
             _FileExtractor(rel, tree.root_node, out, seen, sites, locals_)
             out.files_parsed += 1
-        JavaResolver(out, sites, locals_).run()
+        resolver = JavaResolver(out, sites, locals_)
+        resolver.run()
         add_endpoints(out)
+        add_entities(out, resolver)
         return out

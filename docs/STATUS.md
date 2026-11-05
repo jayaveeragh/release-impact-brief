@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-11-02
+Last updated: 2026-11-04
 
 ## Where we are
 
@@ -12,10 +12,10 @@ Phase 1: Java facts.
 |---|---|
 | 1. Adapter interface, Java parser (classes, methods, fields, imports), `rib facts`, answer key | done (28b0edb) |
 | 2. Call resolution with confidence, interface→implementation, Spring injection; library calls listed, not traced | done (bf1eeda) |
-| 3. Spring endpoints | done, awaiting owner commit (answer key: 17/17 endpoints match) |
-| 4. JPA entities and repositories; check against answer key | next |
+| 3. Spring endpoints | done (41abb08, together with the move to repo root; answer key: 17/17 endpoints match) |
+| 4. JPA entities, relations and repositories; edge kinds as an enum; check against answer key | done (next commit; answer key: entities, mapped superclasses, relations, repositories all match) |
 
-Phase 1 is done when `rib facts` on spring-petclinic @ `500158f` matches [tests/fixtures/spring-petclinic/expected.json](../tests/fixtures/spring-petclinic/expected.json).
+Phase 1 done criterion met: `rib facts` on spring-petclinic @ `500158f` matches [tests/fixtures/spring-petclinic/expected.json](../tests/fixtures/spring-petclinic/expected.json) (network tests `test_petclinic_endpoints_match_hand_written_answer_key` and `test_petclinic_data_model_matches_hand_written_answer_key`).
 
 ## Working agreement
 
@@ -24,13 +24,15 @@ Phase 1 is done when `rib facts` on spring-petclinic @ `500158f` matches [tests/
 
 ## Next
 
-Phase 1, step 4: JPA entities, relations and repositories; make edge kinds an enum; Phase 1 done check against the answer key.
+Phase 2 (per PROJECT_BRIEF.md): needs a plan, approved by the owner before coding.
 
-## Resume here (updated 2026-11-02)
+## Resume here (updated 2026-11-04)
 
-1. **Repo layout (owner decision pending):** the git repo is rooted at `~/account2`, so on GitHub everything sits under `release-impact-brief/`: the README isn't shown on the repo page and CI never runs (GitHub only reads `.github/workflows` at the root). See PROJECT_NOTES.md → Surprises.
-2. Run `rm -rf .rib` before `rib facts` on a repo cached by an older version (the cache isn't versioned).
-3. Next: Phase 1 step 4 (JPA entities, edge-kind enum, Phase 1 done check).
+1. Check CI on GitHub → Actions for the latest push.
+2. Run `rm -rf .rib` before `rib facts` on a repo cached by an older version (the cache isn't versioned; this step also adds a CHECK constraint on edge kinds, so an old `.rib/facts.sqlite` keeps the old schema).
+3. Next: propose the Phase 2 plan and wait for approval.
 4. Open question for the owner: version the fact cache by extractor version (proposed, not approved).
+
+Identity check for commits: run `git config user.email` (not `--global`) inside the repo; it must show the jayaveeragh noreply address.
 
 There is no web UI yet: the first browser view is Phase 4.

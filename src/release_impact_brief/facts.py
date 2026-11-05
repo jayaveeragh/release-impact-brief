@@ -35,6 +35,19 @@ class NodeKind(StrEnum):
     TEST = "test"
 
 
+class EdgeKind(StrEnum):
+    CONTAINS = "contains"
+    CALLS = "calls"
+    EXTENDS = "extends"
+    IMPLEMENTS = "implements"
+    OVERRIDES = "overrides"
+    INJECTS = "injects"
+    HANDLES = "handles"  # endpoint -> handler method
+    MAPS = "maps"  # class -> JPA entity
+    RELATES = "relates"  # relation field -> target entity
+    STORES = "stores"  # repository -> entity
+
+
 _SHA_RE = re.compile(r"[0-9a-f]{40}")
 
 
@@ -66,16 +79,17 @@ class Edge:
     id: str
     src: str
     dst: str
-    kind: str
+    kind: EdgeKind
     confidence: Confidence
     evidence_file: str
     evidence_line: int
     resolver: str
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "kind", EdgeKind(self.kind))
         object.__setattr__(self, "confidence", Confidence(self.confidence))
-        if not self.id or not self.kind:
-            raise ValueError("edge id and kind are required")
+        if not self.id:
+            raise ValueError("edge id is required")
         _check_lines(self.evidence_line, self.evidence_line)
 
 
@@ -107,7 +121,7 @@ CREATE TABLE IF NOT EXISTS edges (
     id TEXT NOT NULL,
     src TEXT NOT NULL,
     dst TEXT NOT NULL,
-    kind TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK (kind IN ({_in_list(EdgeKind)})),
     confidence TEXT NOT NULL CHECK (confidence IN ({_in_list(Confidence)})),
     evidence_file TEXT NOT NULL,
     evidence_line INTEGER NOT NULL CHECK (evidence_line >= 1),
@@ -184,7 +198,7 @@ class FactStore:
                     e.id,
                     e.src,
                     e.dst,
-                    e.kind,
+                    e.kind.value,
                     e.confidence.value,
                     e.evidence_file,
                     e.evidence_line,

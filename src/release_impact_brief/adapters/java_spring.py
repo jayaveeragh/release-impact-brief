@@ -8,7 +8,7 @@ the raw expression and are marked `guess`, so they're visible but not trusted.
 from typing import Any
 
 from release_impact_brief.adapters import Extraction
-from release_impact_brief.facts import Confidence, Edge, Node, NodeKind
+from release_impact_brief.facts import Confidence, Edge, EdgeKind, Node, NodeKind
 
 _RESOLVER = "java-spring"
 _CONTROLLERS = {"Controller", "RestController"}
@@ -209,7 +209,7 @@ def add_endpoints(out: Extraction) -> None:
                                 f"handles:{endpoint_id}>{method.id}",
                                 endpoint_id,
                                 method.id,
-                                "handles",
+                                EdgeKind.HANDLES,
                                 conf,
                                 method.file,
                                 method.start_line,

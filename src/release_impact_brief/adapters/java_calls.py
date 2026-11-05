@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass, field
 
 from release_impact_brief.adapters import Extraction
-from release_impact_brief.facts import Confidence, Edge, Node, NodeKind
+from release_impact_brief.facts import Confidence, Edge, EdgeKind, Node, NodeKind
 
 _RESOLVER = "java-calls"
 _RANK = {Confidence.EXACT: 3, Confidence.LIKELY: 2, Confidence.GUESS: 1, Confidence.UNKNOWN: 0}
@@ -216,7 +216,9 @@ class JavaResolver:
 
     # ---- edges -------------------------------------------------------------
 
-    def _edge(self, kind: str, src: str, dst: str, conf: Confidence, file: str, line: int) -> None:
+    def _edge(
+        self, kind: EdgeKind, src: str, dst: str, conf: Confidence, file: str, line: int
+    ) -> None:
         edge_id = f"{kind}:{src}>{dst}"
         old = self.edges.get(edge_id)
         if old is None or _RANK[conf] > _RANK[old.confidence]:
@@ -279,8 +281,8 @@ class JavaResolver:
                 targets = [c.id for c in ctors] or [created.class_id]
                 conf = created.confidence if len(targets) == 1 else Confidence.LIKELY
                 for t in targets:
-                    self._edge("calls", src, t, _weakest(conf, created.confidence), site.file,
-                               site.line)  # fmt: skip
+                    self._edge(EdgeKind.CALLS, src, t, _weakest(conf, created.confidence),
+                               site.file, site.line)  # fmt: skip
             elif created.status == "library":
                 self._note(self.library, src, f"new {created.name}")
             return created
@@ -318,7 +320,7 @@ class JavaResolver:
         found, library_super = self.find_methods(class_id, site.name, site.arity)
         if len(found) == 1:
             target = found[0]
-            self._edge("calls", site.method_id, target.id, type_conf, site.file, site.line)
+            self._edge(EdgeKind.CALLS, site.method_id, target.id, type_conf, site.file, site.line)
             declaring = self.ix.parent[target.id]
             result = self.resolve_type(target.attributes["return_type"] or "", declaring)
             result.confidence = _weakest(result.confidence, type_conf)
@@ -327,7 +329,7 @@ class JavaResolver:
             conf = _weakest(type_conf, Confidence.LIKELY)
             results = []
             for m in found:
-                self._edge("calls", site.method_id, m.id, conf, site.file, site.line)
+                self._edge(EdgeKind.CALLS, site.method_id, m.id, conf, site.file, site.line)
                 declaring = self.ix.parent[m.id]
                 results.append(self.resolve_type(m.attributes["return_type"] or "", declaring))
             # Ambiguous overload, but if every candidate returns the same type, keep it.
@@ -338,7 +340,7 @@ class JavaResolver:
             return _UNKNOWN
         if library_super:
             conf = _weakest(type_conf, Confidence.LIKELY)
-            self._edge("calls", site.method_id, class_id, conf, site.file, site.line)
+            self._edge(EdgeKind.CALLS, site.method_id, class_id, conf, site.file, site.line)
             self._note(
                 self.library,
                 site.method_id,
@@ -357,8 +359,8 @@ class JavaResolver:
             and self._arity_matches(m, site.arity)
         ]  # fmt: skip
         if len(candidates) == 1:
-            self._edge("calls", site.method_id, candidates[0].id, Confidence.GUESS, site.file,
-                       site.line)  # fmt: skip
+            self._edge(EdgeKind.CALLS, site.method_id, candidates[0].id, Confidence.GUESS,
+                       site.file, site.line)  # fmt: skip
         else:
             self._note(self.unresolved, site.method_id, f"?.{site.name}")
         return _UNKNOWN
@@ -372,12 +374,12 @@ class JavaResolver:
             for raw in cls.attributes["extends"]:
                 sup = self.resolve_type(raw, cls.id)
                 if sup.status == "repo" and sup.class_id:
-                    self._edge("extends", cls.id, sup.class_id, sup.confidence, cls.file,
+                    self._edge(EdgeKind.EXTENDS, cls.id, sup.class_id, sup.confidence, cls.file,
                                cls.start_line)  # fmt: skip
             for raw in cls.attributes["implements"]:
                 sup = self.resolve_type(raw, cls.id)
                 if sup.status == "repo" and sup.class_id:
-                    kind = "extends" if is_interface else "implements"
+                    kind = EdgeKind.EXTENDS if is_interface else EdgeKind.IMPLEMENTS
                     self._edge(kind, cls.id, sup.class_id, sup.confidence, cls.file,
                                cls.start_line)  # fmt: skip
             self._overrides(cls)
@@ -406,7 +408,7 @@ class JavaResolver:
                         conf = _weakest(sup.confidence, Confidence.LIKELY)
                     else:
                         continue
-                    self._edge("overrides", m.id, sm.id, conf, m.file, m.start_line)
+                    self._edge(EdgeKind.OVERRIDES, m.id, sm.id, conf, m.file, m.start_line)
             pending += [s for _, s in self._supertypes(sup.class_id)]
 
     def _injection(self, cls: Node) -> None:
@@ -436,8 +438,8 @@ class JavaResolver:
         for type_text, conf, line in injected:
             target = self.resolve_type(type_text, cls.id)
             if target.status == "repo" and target.class_id:
-                self._edge("injects", cls.id, target.class_id, _weakest(conf, target.confidence),
-                           cls.file, line)  # fmt: skip
+                self._edge(EdgeKind.INJECTS, cls.id, target.class_id,
+                           _weakest(conf, target.confidence), cls.file, line)  # fmt: skip
 
     # ---- run ---------------------------------------------------------------
 

@@ -52,6 +52,9 @@ def _facts(args: argparse.Namespace) -> int:
             if n.kind == NodeKind.ENDPOINT:
                 handler = n.attributes["handler"].removeprefix("java:method:")
                 print(f"{n.name:<50} -> {handler}  {n.file}:{n.start_line}")
+            elif n.kind == NodeKind.ENTITY:
+                cls = n.attributes["class"].removeprefix("java:class:")
+                print(f"{n.name:<30} <- {cls}  {n.file}:{n.start_line}")
             else:
                 print(f"{n.id}  {n.file}:{n.start_line}")
     finally:

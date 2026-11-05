@@ -122,6 +122,7 @@ def test_fields_including_multi_declarators(facts: Extraction) -> None:
         "type": "List<Pet>",
         "modifiers": ["private", "final"],
         "annotations": ["OneToMany"],
+        "relation": {"kind": "OneToMany", "target": "Pet"},
     }
     assert nodes["java:field:org.example.owner.Owner#city"].attributes["type"] == "String"
     assert nodes["java:field:org.example.owner.Owner#telephone"].start_line == 13
@@ -156,7 +157,10 @@ def test_every_member_has_exactly_one_container(facts: Extraction) -> None:
     top_level = {
         n.id for n in facts.nodes if n.kind == NodeKind.CLASS and "imports" in n.attributes
     }
-    assert sorted(contained) == sorted(n.id for n in facts.nodes if n.id not in top_level)
+    members = (NodeKind.CLASS, NodeKind.METHOD, NodeKind.FIELD)  # entities hang off `maps`
+    assert sorted(contained) == sorted(
+        n.id for n in facts.nodes if n.kind in members and n.id not in top_level
+    )
 
 
 def test_same_qualified_name_in_two_files_keeps_both(tmp_path: Path) -> None:

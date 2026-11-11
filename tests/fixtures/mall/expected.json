@@ -1,0 +1,36 @@
+{
+  "repo": "https://github.com/macrozheng/mall",
+  "commit_sha": "dcaa93b3150352e5044708d7211b5bed0af4509f",
+  "written": "2026-11-10, by reading the poms, application*.yml, compose files and @SpringBootApplication classes by hand, before the tool could classify",
+  "structure": {
+    "layout": "multi-module",
+    "runtime": "unclear",
+    "runtime_note": "4 apps deployed separately (docker-compose-app.yml) but sharing one MySQL database and no discovery, gateway or config server: signals conflict",
+    "services": [
+      {
+        "name": "mall-admin",
+        "module": "mall-admin",
+        "main_class": "MallAdminApplication",
+        "roles": []
+      },
+      {
+        "name": "mall-demo",
+        "module": "mall-demo",
+        "main_class": "MallDemoApplication",
+        "roles": []
+      },
+      {
+        "name": "mall-portal",
+        "module": "mall-portal",
+        "main_class": "MallPortalApplication",
+        "roles": []
+      },
+      {
+        "name": "mall-search",
+        "module": "mall-search",
+        "main_class": "MallSearchApplication",
+        "roles": []
+      }
+    ]
+  }
+}

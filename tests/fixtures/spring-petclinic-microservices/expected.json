@@ -1,0 +1,84 @@
+{
+  "repo": "https://github.com/spring-petclinic/spring-petclinic-microservices",
+  "commit_sha": "e8b747ab522721076cacb5cf688eb8a54ba8c5c9",
+  "written": "2026-11-10, by reading the poms, application.yml files and @SpringBootApplication classes by hand, before the tool could classify",
+  "structure": {
+    "layout": "multi-module",
+    "runtime": "microservices",
+    "services": [
+      {
+        "name": "admin-server",
+        "module": "spring-petclinic-admin-server",
+        "main_class": "SpringBootAdminApplication",
+        "roles": [
+          "admin_server",
+          "config_client",
+          "discovery_client"
+        ]
+      },
+      {
+        "name": "api-gateway",
+        "module": "spring-petclinic-api-gateway",
+        "main_class": "ApiGatewayApplication",
+        "roles": [
+          "config_client",
+          "discovery_client",
+          "gateway"
+        ]
+      },
+      {
+        "name": "spring-petclinic-config-server",
+        "module": "spring-petclinic-config-server",
+        "main_class": "ConfigServerApplication",
+        "roles": [
+          "config_server"
+        ]
+      },
+      {
+        "name": "customers-service",
+        "module": "spring-petclinic-customers-service",
+        "main_class": "CustomersServiceApplication",
+        "roles": [
+          "config_client",
+          "discovery_client"
+        ]
+      },
+      {
+        "name": "discovery-server",
+        "module": "spring-petclinic-discovery-server",
+        "main_class": "DiscoveryServerApplication",
+        "roles": [
+          "config_client",
+          "discovery_server"
+        ]
+      },
+      {
+        "name": "genai-service",
+        "module": "spring-petclinic-genai-service",
+        "main_class": "GenAIServiceApplication",
+        "roles": [
+          "config_client",
+          "discovery_client"
+        ]
+      },
+      {
+        "name": "vets-service",
+        "module": "spring-petclinic-vets-service",
+        "main_class": "VetsServiceApplication",
+        "roles": [
+          "config_client",
+          "discovery_client"
+        ]
+      },
+      {
+        "name": "visits-service",
+        "module": "spring-petclinic-visits-service",
+        "main_class": "VisitsServiceApplication",
+        "roles": [
+          "config_client",
+          "discovery_client"
+        ]
+      }
+    ]
+  }
+}

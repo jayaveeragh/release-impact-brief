@@ -12,6 +12,8 @@ requires-python = ">=3.12"
 dependencies = [
     "tree-sitter>=0.25.2,<0.26",  # 0.26.0 segfaults on some Java files, see PROJECT_NOTES.md
     "tree-sitter-java>=0.23.5",
+    "pyyaml>=6.0.3",  # safe_load / compose only: repo files are untrusted
+    "defusedxml>=0.7.1",  # pom.xml is untrusted: no entity expansion
 ]
 
 [project.scripts]
@@ -22,6 +24,8 @@ dev = [
     "ruff>=0.17",
     "pytest>=9.2",
     "mypy>=2.4",
+    "types-pyyaml>=6.0.12",
+    "types-defusedxml>=0.7.0",
 ]
 
 [tool.hatch.build.targets.wheel]

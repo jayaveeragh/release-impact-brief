@@ -6,10 +6,11 @@ from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from release_impact_brief.adapters import extract_all
+from release_impact_brief.adapters import LanguageAdapter, extract_all
 from release_impact_brief.adapters.java import JavaAdapter
+from release_impact_brief.adapters.structure import StructureAdapter
 from release_impact_brief.facts import FactStore, NodeKind
-from release_impact_brief.fetch import FetchError, Limits, fetch_repo, parse_github_url, resolve_sha
+from release_impact_brief.fetch import FetchError, fetch_repo
 
 
 def _fetch(args: argparse.Namespace) -> int:
@@ -27,23 +28,23 @@ def _fetch(args: argparse.Namespace) -> int:
 
 
 def _facts(args: argparse.Namespace) -> int:
-    repo = parse_github_url(args.url)
-    sha = resolve_sha(repo.url, args.ref, Limits())
+    # Always re-extract: parsing takes about a second, and a cache keyed only by commit
+    # would serve stale facts after the extractor changes. Only LLM output gets cached.
+    with fetch_repo(args.url, args.ref) as fetched:
+        adapters: list[LanguageAdapter] = [JavaAdapter(), StructureAdapter()]
+        extraction = extract_all(fetched.path, adapters, fetched.skipped_large)
+    repo, sha = fetched.repo, fetched.commit_sha
     args.db.parent.mkdir(parents=True, exist_ok=True)
     store = FactStore(args.db)
     try:
         snap = store.snapshot(repo.url, sha)
-        cached = bool(store.nodes(snap))
-        if not cached:
-            with fetch_repo(repo.url, sha) as fetched:
-                extraction = extract_all(fetched.path, [JavaAdapter()], fetched.skipped_large)
-            store.add_facts(snap, extraction.nodes, extraction.edges)
-            print(f"parsed:      {extraction.files_parsed} files")
-            for rel in extraction.files_with_errors:
-                print(f"  syntax errors (facts may be partial): {rel}")
+        store.replace_facts(snap, extraction.nodes, extraction.edges)
+        print(f"parsed:      {extraction.files_parsed} files")
+        for rel in extraction.files_with_errors:
+            print(f"  parse errors (facts may be partial): {rel}")
         nodes = store.nodes(snap, args.kind)
         print(f"repo:        {repo.url}")
-        print(f"commit:      {sha}{'  (cached)' if cached else ''}")
+        print(f"commit:      {sha}")
         counts = Counter(n.kind.value for n in store.nodes(snap))
         print("facts:       " + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())))
         print(f"edges:       {len(store.edges(snap))}")

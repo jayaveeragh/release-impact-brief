@@ -148,3 +148,14 @@ def test_database_rejects_bad_edge_kind_even_without_python_checks(store: FactSt
             "INSERT INTO edges VALUES (?, 'e-1', 'm-1', 'm-2', 'uses', 'exact', 'f', 1, 'raw')",
             (snap,),
         )
+
+
+def test_replace_facts_swaps_a_snapshot_without_touching_others(store: FactStore) -> None:
+    snap_a = store.snapshot(REPO, SHA_A)
+    snap_b = store.snapshot(REPO, SHA_B)
+    store.add_facts(snap_a, [method("m-1"), method("m-2", 30)], [call("e-1", "m-1", "m-2")])
+    store.add_facts(snap_b, [method("m-1")], [])
+    store.replace_facts(snap_a, [method("m-3")], [])
+    assert [n.id for n in store.nodes(snap_a)] == ["m-3"]
+    assert store.edges(snap_a) == []
+    assert [n.id for n in store.nodes(snap_b)] == ["m-1"]

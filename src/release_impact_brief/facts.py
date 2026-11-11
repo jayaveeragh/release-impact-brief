@@ -46,6 +46,7 @@ class EdgeKind(StrEnum):
     MAPS = "maps"  # class -> JPA entity
     RELATES = "relates"  # relation field -> target entity
     STORES = "stores"  # repository -> entity
+    DEPENDS_ON = "depends_on"  # module -> module, deployed service -> service
 
 
 _SHA_RE = re.compile(r"[0-9a-f]{40}")
@@ -159,6 +160,14 @@ class FactStore:
     def add_facts(self, snapshot_id: int, nodes: Iterable[Node], edges: Iterable[Edge]) -> None:
         """Insert nodes and edges in one transaction, so a snapshot is never half-written."""
         with self._conn:
+            self._insert_nodes(snapshot_id, nodes)
+            self._insert_edges(snapshot_id, edges)
+
+    def replace_facts(self, snapshot_id: int, nodes: Iterable[Node], edges: Iterable[Edge]) -> None:
+        """Swap a snapshot's facts for new ones in one transaction (re-extraction)."""
+        with self._conn:
+            self._conn.execute("DELETE FROM edges WHERE snapshot_id = ?", (snapshot_id,))
+            self._conn.execute("DELETE FROM nodes WHERE snapshot_id = ?", (snapshot_id,))
             self._insert_nodes(snapshot_id, nodes)
             self._insert_edges(snapshot_id, edges)
 

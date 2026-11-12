@@ -37,6 +37,10 @@ _METHOD_DECLS = {
     "annotation_type_element_declaration",
 }
 _FIELD_DECLS = {"field_declaration", "constant_declaration"}
+# A file importing one of these talks to other services; its classes keep their string
+# literals (`client_literals`) so URLs and service names can be matched later.
+_HTTP_CLIENTS = ("RestTemplate", "WebClient", "RestClient", "FeignClient", "DiscoveryClient",
+                 "LoadBalancerClient", "HttpClient", "OkHttpClient")  # fmt: skip
 
 
 def _text(node: TsNode | None) -> str:
@@ -146,6 +150,25 @@ def _params(params: TsNode | None) -> list[dict[str, Any]]:
     return out
 
 
+def _literals(body: TsNode | None) -> list[dict[str, Any]]:
+    """Plain string literals in a class body (not in nested classes), with their lines."""
+    found: list[dict[str, Any]] = []
+
+    def visit(n: TsNode) -> None:
+        for child in n.named_children:
+            if child.type in _TYPE_DECLS:
+                continue
+            text = _text(child)
+            if child.type == "string_literal" and not text.startswith('"""') and len(text) >= 2:
+                found.append({"value": text[1:-1], "line": child.start_point.row + 1})
+            else:
+                visit(child)
+
+    if body is not None:
+        visit(body)
+    return found
+
+
 class _FileExtractor:
     def __init__(
         self,
@@ -228,6 +251,8 @@ class _FileExtractor:
             attributes["annotation_args"] = args
         if parent_id is None:
             attributes["imports"] = self.imports
+        if any(i.rsplit(".", 1)[-1] in _HTTP_CLIENTS for i in self.imports):
+            attributes["client_literals"] = _literals(decl.child_by_field_name("body"))
         self._add(
             Node(class_id, NodeKind.CLASS, name, self.rel, start, end, "java", attributes),
             parent_id,

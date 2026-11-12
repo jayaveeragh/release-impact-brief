@@ -6,7 +6,8 @@ import pytest
 
 from release_impact_brief.adapters import Extraction
 from release_impact_brief.facts import EdgeKind, NodeKind
-from release_impact_brief.system import analyze, classify
+from release_impact_brief.pipeline import analyze
+from release_impact_brief.system import classify
 
 POM = "<project><groupId>com.shop</groupId><artifactId>{}</artifactId>{}</project>"
 

@@ -80,5 +80,96 @@
         ]
       }
     ]
+  },
+  "connections": {
+    "written": "2026-11-11, by reading the Java clients, gateway routes, poms and application*.yml by hand, before the tool could detect connections",
+    "routes": [
+      [
+        "api-gateway",
+        "customers-service",
+        "exact"
+      ],
+      [
+        "api-gateway",
+        "vets-service",
+        "exact"
+      ],
+      [
+        "api-gateway",
+        "visits-service",
+        "exact"
+      ],
+      [
+        "api-gateway",
+        "genai-service",
+        "exact"
+      ]
+    ],
+    "requests": [
+      [
+        "api-gateway",
+        "customers-service",
+        "likely"
+      ],
+      [
+        "api-gateway",
+        "visits-service",
+        "likely"
+      ],
+      [
+        "genai-service",
+        "vets-service",
+        "likely"
+      ],
+      [
+        "genai-service",
+        "customers-service",
+        "likely"
+      ]
+    ],
+    "uses": [
+      [
+        "customers-service",
+        "hsqldb",
+        "likely"
+      ],
+      [
+        "customers-service",
+        "mysql",
+        "likely"
+      ],
+      [
+        "vets-service",
+        "hsqldb",
+        "likely"
+      ],
+      [
+        "vets-service",
+        "mysql",
+        "likely"
+      ],
+      [
+        "visits-service",
+        "hsqldb",
+        "likely"
+      ],
+      [
+        "visits-service",
+        "mysql",
+        "likely"
+      ],
+      [
+        "genai-service",
+        "hsqldb",
+        "likely"
+      ],
+      [
+        "genai-service",
+        "mysql",
+        "likely"
+      ]
+    ],
+    "uses_note": "datasource URLs live in the external config repo, so only the JDBC drivers on the classpath are visible",
+    "messaging": []
   }
 }

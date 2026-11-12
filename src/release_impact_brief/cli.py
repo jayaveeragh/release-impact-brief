@@ -6,9 +6,10 @@ from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from release_impact_brief.facts import FactStore, NodeKind
+from release_impact_brief.facts import EdgeKind, FactStore, NodeKind
 from release_impact_brief.fetch import FetchError, fetch_repo
-from release_impact_brief.system import analyze, classify
+from release_impact_brief.pipeline import analyze
+from release_impact_brief.system import classify
 
 
 def _fetch(args: argparse.Namespace) -> int:
@@ -65,11 +66,16 @@ def _facts(args: argparse.Namespace) -> int:
     return 0
 
 
+_CONNECTIONS = {EdgeKind.ROUTES, EdgeKind.REQUESTS, EdgeKind.USES, EdgeKind.PUBLISHES,
+                EdgeKind.CONSUMES}  # fmt: skip
+
+
 def _structure(args: argparse.Namespace) -> int:
     store, snap = _load(args)
     try:
         result = classify(store.nodes(snap), store.edges(snap))
         services = store.nodes(snap, NodeKind.SERVICE)
+        links = [e for e in store.edges(snap) if e.kind in _CONNECTIONS]
     finally:
         store.close()
     for label in ("layout", "runtime"):
@@ -85,6 +91,14 @@ def _structure(args: argparse.Namespace) -> int:
         roles = ", ".join(a["roles"]) or "-"
         module = (a["module"] or "-").removeprefix("build:module:")
         print(f"  {s.name:<34} module {module:<36} port {a['port'] or '-':<6} roles {roles}")
+    print(f"\nconnections: {len(links)}")
+    for e in sorted(links, key=lambda e: (e.src, e.kind, e.dst)):
+        src, dst = e.src.split(":", 1)[1], e.dst.split(":", 1)[1]
+        print(f"  {src:<30} {e.kind:<10} {dst:<30} {e.confidence:<7} "
+              f"{e.evidence_file}:{e.evidence_line}")  # fmt: skip
+    for s in services:
+        for u in s.attributes.get("unresolved_targets", []):
+            print(f"  {s.name:<30} {'?':<10} {u['target']:<30} unknown {u['file']}:{u['line']}")
     return 0
 
 

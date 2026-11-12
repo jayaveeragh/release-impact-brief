@@ -1,5 +1,6 @@
 import sqlite3
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 
@@ -100,7 +101,7 @@ def test_rejects_unknown_confidence_label() -> None:
 
 def test_rejects_unknown_edge_kind() -> None:
     with pytest.raises(ValueError):
-        Edge("e-1", "m-1", "m-2", "uses", Confidence.EXACT, "f", 1, "test")  # type: ignore[arg-type]
+        Edge("e-1", "m-1", "m-2", "knows", Confidence.EXACT, "f", 1, "test")  # type: ignore[arg-type]
 
 
 def test_rejects_unknown_node_kind() -> None:
@@ -145,7 +146,7 @@ def test_database_rejects_bad_edge_kind_even_without_python_checks(store: FactSt
     store.add_nodes(snap, [method("m-1"), method("m-2", 30)])
     with pytest.raises(sqlite3.IntegrityError):
         store._conn.execute(
-            "INSERT INTO edges VALUES (?, 'e-1', 'm-1', 'm-2', 'uses', 'exact', 'f', 1, 'raw')",
+            "INSERT INTO edges VALUES (?, 'e-1', 'm-1', 'm-2', 'knows', 'exact', 'f', 1, 'raw')",
             (snap,),
         )
 
@@ -159,3 +160,24 @@ def test_replace_facts_swaps_a_snapshot_without_touching_others(store: FactStore
     assert [n.id for n in store.nodes(snap_a)] == ["m-3"]
     assert store.edges(snap_a) == []
     assert [n.id for n in store.nodes(snap_b)] == ["m-1"]
+
+
+def test_database_with_an_older_schema_is_rebuilt(tmp_path: Path) -> None:
+    db = tmp_path / "facts.sqlite"
+    old = sqlite3.connect(db)
+    old.executescript(
+        "CREATE TABLE snapshots (id INTEGER PRIMARY KEY, repo TEXT, commit_sha TEXT);"
+        "CREATE TABLE nodes (snapshot_id INTEGER, id TEXT);"
+        "CREATE TABLE edges (snapshot_id INTEGER, id TEXT, kind TEXT CHECK (kind IN ('calls')));"
+    )
+    old.close()
+    store = FactStore(db)
+    try:
+        snap = store.snapshot(REPO, SHA_A)
+        store.add_nodes(snap, [method("m-1"), method("m-2", 30)])
+        edge = Edge("e-1", "m-1", "m-2", EdgeKind.USES, Confidence.EXACT, "f", 1, "test")
+        store.add_edges(snap, [edge])
+        assert store.edges(snap) == [edge]
+    finally:
+        store.close()
+    assert FactStore(db).nodes(snap) != []  # same schema: kept, not rebuilt again

@@ -32,5 +32,89 @@
         "roles": []
       }
     ]
+  },
+  "connections": {
+    "written": "2026-11-11, by reading the Java clients, gateway routes, poms and application*.yml by hand, before the tool could detect connections",
+    "routes": [],
+    "requests": [
+      [
+        "mall-demo",
+        "mall-admin",
+        "guess"
+      ]
+    ],
+    "requests_note": "mall-demo calls ${host.mall.admin} = http://localhost:8080; mall-admin is the only app without its own server.port, so on Spring's default 8080 - a guess",
+    "uses": [
+      [
+        "mall-admin",
+        "mysql",
+        "exact"
+      ],
+      [
+        "mall-admin",
+        "redis",
+        "exact"
+      ],
+      [
+        "mall-demo",
+        "mysql",
+        "exact"
+      ],
+      [
+        "mall-demo",
+        "redis",
+        "likely"
+      ],
+      [
+        "mall-portal",
+        "mysql",
+        "exact"
+      ],
+      [
+        "mall-portal",
+        "mongodb",
+        "exact"
+      ],
+      [
+        "mall-portal",
+        "redis",
+        "exact"
+      ],
+      [
+        "mall-portal",
+        "rabbitmq",
+        "exact"
+      ],
+      [
+        "mall-search",
+        "mysql",
+        "exact"
+      ],
+      [
+        "mall-search",
+        "elasticsearch",
+        "exact"
+      ],
+      [
+        "mall-search",
+        "redis",
+        "likely"
+      ]
+    ],
+    "messaging": [
+      [
+        "mall-portal",
+        "consumes",
+        "rabbitmq",
+        "mall.order.cancel"
+      ],
+      [
+        "mall-portal",
+        "publishes",
+        "rabbitmq",
+        null
+      ]
+    ],
+    "messaging_note": "the publisher's exchange comes from an enum (QueueEnum), not a literal, so its destination is not resolved"
   }
 }

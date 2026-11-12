@@ -11,12 +11,9 @@ carries the evidence (file and line) it was based on; conflicting signals give
 import posixpath
 import re
 from collections.abc import Iterable
-from pathlib import Path
 from typing import Any
 
-from release_impact_brief.adapters import Extraction, LanguageAdapter, extract_all
-from release_impact_brief.adapters.java import JavaAdapter
-from release_impact_brief.adapters.structure import StructureAdapter
+from release_impact_brief.adapters import Extraction
 from release_impact_brief.facts import Confidence, Edge, EdgeKind, Node, NodeKind
 
 _RESOLVER = "system"
@@ -38,19 +35,11 @@ _INFRASTRUCTURE = {
 }
 
 
-def analyze(root: Path, skip: Iterable[str] = ()) -> Extraction:
-    """All facts for a checked-out repo: code, build/deploy files, then services."""
-    adapters: list[LanguageAdapter] = [JavaAdapter(), StructureAdapter()]
-    out = extract_all(root, adapters, skip)
-    add_services(out)
-    return out
-
-
-def _is_test(path: str) -> bool:
+def is_test(path: str) -> bool:
     return "/src/test/" in f"/{path}"
 
 
-def _module_dir(path: str, module_dirs: Iterable[str]) -> str | None:
+def module_dir(path: str, module_dirs: Iterable[str]) -> str | None:
     """Directory of the innermost module holding `path`."""
     holding = [d for d in module_dirs if d == "." or path.startswith(f"{d}/")]
     return max(holding, key=lambda d: 0 if d == "." else len(d), default=None)
@@ -60,7 +49,7 @@ def _evidence(text: str, file: str | None, line: int | None = None) -> dict[str,
     return {"text": text, "file": file, "line": line}
 
 
-def _properties(config: Node) -> list[tuple[str, dict[str, Any]]]:
+def properties(config: Node) -> list[tuple[str, dict[str, Any]]]:
     """(key, {value, line}) for every property in every document of a Spring config."""
     return [(k, v) for doc in config.attributes["documents"] for k, v in doc["properties"].items()]
 
@@ -84,7 +73,7 @@ def _roles(main: Node, module: Node | None, configs: list[Node]) -> dict[str, di
     if module is not None and any(d.endswith(_DISCOVERY_CLIENT_DEPS) for d in dependencies):
         roles.setdefault("discovery_client", {"file": module.file, "line": 1})
     for config in configs:
-        for key, prop in _properties(config):
+        for key, prop in properties(config):
             role = None
             if _GATEWAY_ROUTE.match(key):
                 role = "gateway"
@@ -97,7 +86,7 @@ def _roles(main: Node, module: Node | None, configs: list[Node]) -> dict[str, di
     return dict(sorted(roles.items()))
 
 
-def _deployed_by(name: str, module_dir: str | None, deploys: list[Node]) -> list[str]:
+def _deployed_by(name: str, directory: str | None, deploys: list[Node]) -> list[str]:
     """Compose services / Kubernetes workloads that look like this service (by name)."""
     found = []
     for d in deploys:
@@ -106,7 +95,7 @@ def _deployed_by(name: str, module_dir: str | None, deploys: list[Node]) -> list
         image_names = {str(i).rsplit("/", 1)[-1].split(":", 1)[0] for i in images}
         build = a.get("build")
         build_dir = posixpath.normpath(posixpath.join(posixpath.dirname(d.file), str(build)))
-        built_here = bool(build) and build_dir == module_dir
+        built_here = bool(build) and build_dir == directory
         if d.name == name or name in image_names or built_here:
             found.append(d.id)
     return sorted(found)
@@ -122,7 +111,7 @@ def add_services(out: Extraction) -> None:
         if n.kind != NodeKind.CONFIG:
             continue
         if n.attributes["config_type"] == "spring" and not n.attributes["test"]:
-            configs.setdefault(_module_dir(n.file, modules), []).append(n)
+            configs.setdefault(module_dir(n.file, modules), []).append(n)
         elif n.attributes["config_type"] == "compose_service" or (
             n.attributes["config_type"] == "kubernetes"
             and n.attributes["k8s_kind"] in ("Deployment", "StatefulSet", "DaemonSet")
@@ -133,13 +122,13 @@ def add_services(out: Extraction) -> None:
         for n in out.nodes
         if n.kind == NodeKind.CLASS
         and "SpringBootApplication" in n.attributes["annotations"]
-        and not _is_test(n.file)
+        and not is_test(n.file)
     ]
     seen: set[str] = set()
     for main in sorted(mains, key=lambda n: n.id):
-        module_dir = _module_dir(main.file, modules)
-        module = modules.get(module_dir) if module_dir is not None else None
-        own = configs.get(module_dir, [])
+        directory = module_dir(main.file, modules)
+        module = modules.get(directory) if directory is not None else None
+        own = configs.get(directory, [])
         app_name = _default(own, "spring.application.name")
         if app_name and app_name["value"]:
             name, source = str(app_name["value"]), "spring.application.name"
@@ -161,7 +150,7 @@ def add_services(out: Extraction) -> None:
                                   "port": port["value"] if port else None,
                                   "roles": list(roles),
                                   "role_evidence": roles,
-                                  "deployed_by": _deployed_by(name, module_dir, deploys),
+                                  "deployed_by": _deployed_by(name, directory, deploys),
                               }))  # fmt: skip
         if module is not None:
             out.edges.append(Edge(f"contains:{node_id}>{module.id}", node_id, module.id,
@@ -169,7 +158,7 @@ def add_services(out: Extraction) -> None:
                                   main.start_line, _RESOLVER))  # fmt: skip
 
 
-def _datasource(value: str) -> str:
+def datasource_url(value: str) -> str:
     """Comparable datasource URL: placeholder defaults filled in, query string dropped."""
     return _PLACEHOLDER_DEFAULT.sub(r"\1", value).split("?", 1)[0]
 
@@ -231,7 +220,7 @@ def classify(nodes: Iterable[Node], edges: Iterable[Edge]) -> dict[str, Any]:
         evidence.append(_evidence(f"{len(deployed)} apps deployed as separate containers", file))
 
     # Several apps reading one database point to one system split for deployment.
-    module_dir = {s.attributes["module"]: s.name for s in services if s.attributes["module"]}
+    service_of = {s.attributes["module"]: s.name for s in services if s.attributes["module"]}
     users: dict[str, set[str]] = {}
     where: dict[str, tuple[str, int]] = {}
     for n in nodes:
@@ -239,13 +228,13 @@ def classify(nodes: Iterable[Node], edges: Iterable[Edge]) -> dict[str, Any]:
             continue
         if n.attributes["test"]:
             continue
-        owner = _module_dir(n.file, [m.removeprefix("build:module:") for m in module_dir])
+        owner = module_dir(n.file, [m.removeprefix("build:module:") for m in service_of])
         if owner is None:
             continue
-        for key, prop in _properties(n):
+        for key, prop in properties(n):
             if key == "spring.datasource.url" and prop["value"]:
-                url = _datasource(str(prop["value"]))
-                users.setdefault(url, set()).add(module_dir[f"build:module:{owner}"])
+                url = datasource_url(str(prop["value"]))
+                users.setdefault(url, set()).add(service_of[f"build:module:{owner}"])
                 where.setdefault(url, (n.file, prop["line"]))
     against = [
         _evidence(f"{', '.join(sorted(names))} share database {url}", *where[url])

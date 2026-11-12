@@ -182,5 +182,28 @@
         "roles": []
       }
     ]
+  },
+  "connections": {
+    "written": "2026-11-11, by reading the Java clients, gateway routes, poms and application*.yml by hand, before the tool could detect connections",
+    "routes": [],
+    "requests": [],
+    "uses": [
+      [
+        "spring-petclinic",
+        "mysql",
+        "exact"
+      ],
+      [
+        "spring-petclinic",
+        "postgresql",
+        "exact"
+      ],
+      [
+        "spring-petclinic",
+        "h2",
+        "likely"
+      ]
+    ],
+    "messaging": []
   }
 }

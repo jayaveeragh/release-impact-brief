@@ -7,6 +7,7 @@ on top can always point back to evidence.
 import json
 import re
 import sqlite3
+import zlib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -47,6 +48,11 @@ class EdgeKind(StrEnum):
     RELATES = "relates"  # relation field -> target entity
     STORES = "stores"  # repository -> entity
     DEPENDS_ON = "depends_on"  # module -> module, deployed service -> service
+    ROUTES = "routes"  # gateway service -> service
+    REQUESTS = "requests"  # service -> service over HTTP
+    USES = "uses"  # service -> data store
+    PUBLISHES = "publishes"  # service -> message broker
+    CONSUMES = "consumes"  # service -> message broker
 
 
 _SHA_RE = re.compile(r"[0-9a-f]{40}")
@@ -134,10 +140,22 @@ CREATE TABLE IF NOT EXISTS edges (
 """
 
 
+# Changes whenever the schema text does (e.g. a new edge kind in a CHECK constraint).
+_SCHEMA_VERSION = zlib.crc32(_SCHEMA.encode()) & 0x7FFFFFFF
+
+
 class FactStore:
     def __init__(self, path: Path | str) -> None:
         self._conn = sqlite3.connect(path)
         self._conn.execute("PRAGMA foreign_keys = ON")
+        if self._conn.execute("PRAGMA user_version").fetchone()[0] != _SCHEMA_VERSION:
+            # Facts are always re-extracted from the repo, so an older layout is rebuilt
+            # rather than migrated.
+            self._conn.executescript(
+                "DROP TABLE IF EXISTS edges; DROP TABLE IF EXISTS nodes;"
+                " DROP TABLE IF EXISTS snapshots;"
+            )
+            self._conn.execute(f"PRAGMA user_version = {_SCHEMA_VERSION}")
         self._conn.executescript(_SCHEMA)
 
     def close(self) -> None:

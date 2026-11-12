@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-11-10
+Last updated: 2026-11-11
 
 ## Where we are
 
@@ -30,17 +30,17 @@ Phase 2: System structure (plan approved 2026-11-04).
 | Step | State |
 |---|---|
 | 1. Build and config files: Maven, Gradle (text only), Docker, Compose, Kubernetes, `application.yml` → module / config facts; `rib facts` always re-extracts | done (44ae30a; counts match hand counts on all 3 repos) |
-| 2. Classify layout and runtime style with evidence; answer keys for 3 repos; create `service` facts; `rib structure` | done (next commit; all 3 answer keys match) |
-| 3. Service-to-service calls (Feign, RestTemplate/WebClient, gateway routes, messaging) and data stores | next |
-| 4. Grey-box external systems, unclear-items list, `rib structure` | |
+| 2. Classify layout and runtime style with evidence; answer keys for 3 repos; create `service` facts; `rib structure` | done (da94c66; all 3 answer keys match) |
+| 3. Service-to-service calls (Feign, RestTemplate/WebClient, gateway routes, messaging) and data stores | done (next commit; all 3 answer keys match) |
+| 4. Grey-box external systems, unclear-items list, `rib structure` | next |
 
 Done when: both petclinic repos are classified correctly, with the right services, and unresolved calls appear as unknowns.
 
 ## Resume here (updated 2026-11-04)
 
 1. Check CI on GitHub → Actions for the latest push.
-2. Run `rm -rf .rib` once: older databases keep an old schema (no CHECK on edge kinds, no `depends_on`). After that, `rib facts` re-extracts every run, so no more stale facts.
-3. Next: Phase 2 step 3 (service-to-service calls and data stores; extend the answer keys by hand first: microservices gateway routes `lb://` → 4 services, mall-demo → mall-admin over HTTP, mall's MySQL/Redis/Mongo/RabbitMQ/Elasticsearch).
+2. `.rib/facts.sqlite` rebuilds itself when the schema changes, and `rib` re-extracts every run: no more `rm -rf .rib`.
+3. Next: Phase 2 step 4: turn `unresolved_targets` and outside systems seen in config (e.g. mall's Alipay, MinIO, Aliyun OSS, Logstash) into grey-box `external_system` facts, build the unclear-items list (unresolved targets, `guess` edges, "unclear" verdicts) and print it in `rib structure`. Then the Phase 2 done check.
 
 Identity check for commits: run `git config user.email` (not `--global`) inside the repo; it must show the jayaveeragh noreply address.
 

@@ -9,8 +9,11 @@ Runs after services exist. Every link is an edge with a confidence label:
             -> exact; only its driver/starter on the classpath -> likely
 - publishes / consumes: messaging template calls and `@RabbitListener`-style handlers.
 Targets that match no service are kept on the service as `unresolved_targets`
-instead of being guessed. Only classes in files that import an HTTP client are
-searched for URLs, so documentation links don't become calls.
+instead of being guessed, and become grey-box `external_system` nodes together
+with outside systems named in config (URL / host / endpoint keys). Edges to them
+are `unknown`: the system exists, what it does is not in this repo. Only classes
+in files that import an HTTP client are searched for URLs, so documentation links
+don't become calls.
 """
 
 import re
@@ -36,6 +39,9 @@ _CONFIG_STORES = (
     (re.compile(r"^spring\.elasticsearch\."), "elasticsearch"),
 )
 _LOCATION_KEYS = (".host", ".uri", ".uris", ".addresses", ".bootstrap-servers")
+# A config key whose last part ends like this names somewhere the service connects to.
+_EXTERNAL_KEY_ENDINGS = ("url", "uri", "uris", "endpoint", "host", "address", "addresses")
+_BARE_HOST = re.compile(r"^([a-zA-Z][\w.-]*)(?::(\d+))?$")
 _DEPENDENCY_STORES = {
     "mysql-connector-j": "mysql",
     "mysql-connector-java": "mysql",
@@ -67,6 +73,9 @@ class _Links:
         self.nodes = {n.id: n for n in out.nodes}
         self.services = [n for n in out.nodes if n.kind == NodeKind.SERVICE]
         self.by_name = {s.name: s for s in self.services}
+        for s in self.services:  # names a service is deployed under are its hostnames too
+            for deploy in s.attributes["deployed_by"]:
+                self.by_name.setdefault(self.nodes[deploy].name, s)
         modules = {n.id.removeprefix("build:module:") for n in out.nodes
                    if n.kind == NodeKind.MODULE}  # fmt: skip
         self.module_dirs = modules
@@ -88,6 +97,7 @@ class _Links:
         }  # fmt: skip
         self.edges: dict[str, Edge] = {}
         self.stores: dict[str, dict[str, Any]] = {}
+        self.externals: dict[str, dict[str, Any]] = {}
 
     def service_for(self, file: str) -> Node | None:
         directory = module_dir(file, self.module_dirs)
@@ -102,9 +112,9 @@ class _Links:
         if old is None or _RANK[conf] > _RANK[old.confidence]:
             self.edges[edge_id] = Edge(edge_id, src.id, dst, kind, conf, file, line, _RESOLVER)
 
-    def unresolved(self, service: Node, target: str, file: str, line: int) -> None:
+    def unresolved(self, service: Node, target: str, file: str, line: int, via: EdgeKind) -> None:
         found = service.attributes.setdefault("unresolved_targets", [])
-        entry = {"target": target, "file": file, "line": line}
+        entry = {"target": target, "file": file, "line": line, "via": via.value}
         if entry not in found:
             found.append(entry)
 
@@ -114,12 +124,12 @@ class _Links:
         """Link `service` to whatever `text` (a URL or a service name) points at."""
         match = _URL.match(text)
         if match is None:
-            if text in self.by_name and text != service.name:
+            if text in self.by_name and self.by_name[text].id != service.id:
                 self.edge(kind, service, self.by_name[text].id, Confidence.LIKELY, file, line)
             return
         scheme, host, port = match.groups()
         if host in self.by_name:
-            if host != service.name:
+            if self.by_name[host].id != service.id:
                 conf = Confidence.EXACT if scheme == "lb" else Confidence.LIKELY
                 self.edge(kind, service, self.by_name[host].id, conf, file, line)
             return
@@ -127,7 +137,7 @@ class _Links:
             if on_port.id != service.id:
                 self.edge(kind, service, on_port.id, Confidence.GUESS, file, line)
             return
-        self.unresolved(service, match.group(0), file, line)
+        self.unresolved(service, match.group(0), file, line, kind)
 
     def on_port(self, port: str) -> Node | None:
         """The one service listening on `port` (8080 = a service that sets no port)."""
@@ -174,7 +184,7 @@ class _Links:
                 self.edge(EdgeKind.REQUESTS, service, self.by_name[name].id, Confidence.EXACT,
                           cls.file, cls.start_line)  # fmt: skip
             elif not urls and name not in self.by_name:
-                self.unresolved(service, name, cls.file, cls.start_line)
+                self.unresolved(service, name, cls.file, cls.start_line, EdgeKind.REQUESTS)
         for url in urls:
             self.target(service, url, cls.file, cls.start_line, kind=EdgeKind.REQUESTS)
 
@@ -283,11 +293,77 @@ class _Links:
                     key=lambda m: (m["direction"], m["broker"], m["destination"] or "")
                 )
 
+    # ---- outside systems -------------------------------------------------
+
+    def internal(self, host: str, port: str | None) -> bool:
+        """Whether host[:port] is one of this repo's services (or the service itself)."""
+        return host in self.by_name or (
+            host in _LOCAL_HOSTS and (port is None or self.on_port(port) is not None)
+        )
+
+    def external(self, name: str, service: Node, kind: EdgeKind, value: str, file: str,
+                 line: int, source: str) -> None:  # fmt: skip
+        external_id = f"external:{name}"
+        entry = self.externals.setdefault(external_id, {"name": name, "source": source,
+                                                        "locations": []})  # fmt: skip
+        location = {"value": value, "file": file, "line": line}
+        if location not in entry["locations"]:
+            entry["locations"].append(location)
+        self.edge(kind, service, external_id, Confidence.UNKNOWN, file, line)
+
+    def outside_systems(self) -> None:
+        for service in self.services:
+            for u in service.attributes.get("unresolved_targets", []):
+                match = _URL.match(u["target"])
+                name = (
+                    f"{match.group(2)}{':' + match.group(3) if match.group(3) else ''}"
+                    if match
+                    else u["target"]
+                )
+                self.external(name, service, EdgeKind(u["via"]), u["target"], u["file"],
+                              u["line"], "code")  # fmt: skip
+            for config in self.configs.get(service.id, []):
+                for key, prop in properties(config):
+                    self.config_external(service, config, key, str(prop["value"]).strip(),
+                                         prop["line"])  # fmt: skip
+
+    def config_external(self, service: Node, config: Node, key: str, value: str,
+                        line: int) -> None:  # fmt: skip
+        last = re.sub(r"\[\d+\]$", "", key.rsplit(".", 1)[-1]).lower().replace("-", "")
+        handled = (key == "spring.datasource.url" or _ROUTE_URI.match(key)
+                   or any(p.match(key) for p, _ in _CONFIG_STORES))  # fmt: skip
+        if handled or not last.replace("_", "").endswith(_EXTERNAL_KEY_ENDINGS):
+            return
+        if not value or value == "<redacted>":
+            return
+        placeholder = _PLACEHOLDER.match(value)
+        if placeholder is not None and not placeholder.group(2):
+            host, port = None, None  # e.g. ${AZURE_OPENAI_ENDPOINT}: named, but not visible
+        else:
+            text = placeholder.group(2) if placeholder else value
+            if (url := _URL.match(text)) is not None:
+                host, port = url.group(2), url.group(3)
+            elif (bare := _BARE_HOST.match(text)) is not None:
+                host, port = bare.group(1), bare.group(2)
+            else:
+                return  # a path, `forward:/fallback`, ...
+            if self.internal(host, port):
+                return
+        name = key.rsplit(".", 1)[0] if "." in key else (host or key)
+        name = name.removeprefix("spring.")
+        self.external(name, service, EdgeKind.CONNECTS, value, config.file, line, "config")
+
     def finish(self) -> None:
         for store_id, s in sorted(self.stores.items()):
             attributes = {"kind": s["kind"], "locations": s["locations"]}
             self.out.nodes.append(Node(store_id, NodeKind.DATA_STORE, s["kind"], s["file"],
                                        s["line"], s["line"], "config", attributes))  # fmt: skip
+        for external_id, x in sorted(self.externals.items()):
+            first = x["locations"][0]
+            self.out.nodes.append(Node(external_id, NodeKind.EXTERNAL_SYSTEM, x["name"],
+                                       first["file"], first["line"], first["line"], "config", {
+                                           "not_analyzed": True, "source": x["source"],
+                                           "locations": x["locations"]}))  # fmt: skip
         self.out.edges += sorted(self.edges.values(), key=lambda e: e.id)
 
 
@@ -297,4 +373,5 @@ def add_connections(out: Extraction) -> None:
     links.http()
     links.data_stores()
     links.messaging()
+    links.outside_systems()
     links.finish()

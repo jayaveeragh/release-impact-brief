@@ -171,5 +171,28 @@
     ],
     "uses_note": "datasource URLs live in the external config repo, so only the JDBC drivers on the classpath are visible",
     "messaging": []
+  },
+  "unknowns": {
+    "written": "2026-11-11, by reading the non-test application*.yml/properties (URL/host/endpoint keys), client classes and mapping annotations by hand, before the tool could list them",
+    "external_systems": [
+      [
+        "spring-petclinic-config-server",
+        "cloud.config.server.git"
+      ],
+      [
+        "genai-service",
+        "ai.azure.openai"
+      ]
+    ],
+    "unclear_items": [
+      [
+        "external_system",
+        "cloud.config.server.git"
+      ],
+      [
+        "external_system",
+        "ai.azure.openai"
+      ]
+    ]
   }
 }

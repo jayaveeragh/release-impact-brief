@@ -9,7 +9,7 @@ from pathlib import Path
 from release_impact_brief.facts import EdgeKind, FactStore, NodeKind
 from release_impact_brief.fetch import FetchError, fetch_repo
 from release_impact_brief.pipeline import analyze
-from release_impact_brief.system import classify
+from release_impact_brief.system import classify, unclear_items
 
 
 def _fetch(args: argparse.Namespace) -> int:
@@ -67,7 +67,7 @@ def _facts(args: argparse.Namespace) -> int:
 
 
 _CONNECTIONS = {EdgeKind.ROUTES, EdgeKind.REQUESTS, EdgeKind.USES, EdgeKind.PUBLISHES,
-                EdgeKind.CONSUMES}  # fmt: skip
+                EdgeKind.CONSUMES, EdgeKind.CONNECTS}  # fmt: skip
 
 
 def _structure(args: argparse.Namespace) -> int:
@@ -76,6 +76,7 @@ def _structure(args: argparse.Namespace) -> int:
         result = classify(store.nodes(snap), store.edges(snap))
         services = store.nodes(snap, NodeKind.SERVICE)
         links = [e for e in store.edges(snap) if e.kind in _CONNECTIONS]
+        unclear = unclear_items(store.nodes(snap), store.edges(snap))
     finally:
         store.close()
     for label in ("layout", "runtime"):
@@ -96,9 +97,14 @@ def _structure(args: argparse.Namespace) -> int:
         src, dst = e.src.split(":", 1)[1], e.dst.split(":", 1)[1]
         print(f"  {src:<30} {e.kind:<10} {dst:<30} {e.confidence:<7} "
               f"{e.evidence_file}:{e.evidence_line}")  # fmt: skip
-    for s in services:
-        for u in s.attributes.get("unresolved_targets", []):
-            print(f"  {s.name:<30} {'?':<10} {u['target']:<30} unknown {u['file']}:{u['line']}")
+    print(f"\nunclear:     {len(unclear)}  (external = not analyzed, not in this repo)")
+    for item in unclear:
+        where = (
+            f"  ({item['file']}{':' + str(item['line']) if item['line'] else ''})"
+            if item["file"]
+            else ""
+        )
+        print(f"  - [{item['kind']}] {item['text']}{where}")
     return 0
 
 

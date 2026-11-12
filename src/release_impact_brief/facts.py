@@ -53,6 +53,7 @@ class EdgeKind(StrEnum):
     USES = "uses"  # service -> data store
     PUBLISHES = "publishes"  # service -> message broker
     CONSUMES = "consumes"  # service -> message broker
+    CONNECTS = "connects"  # service -> external system named in its config
 
 
 _SHA_RE = re.compile(r"[0-9a-f]{40}")

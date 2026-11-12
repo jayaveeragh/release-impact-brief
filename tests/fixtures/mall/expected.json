@@ -116,5 +116,65 @@
       ]
     ],
     "messaging_note": "the publisher's exchange comes from an enum (QueueEnum), not a literal, so its destination is not resolved"
+  },
+  "unknowns": {
+    "written": "2026-11-11, by reading the non-test application*.yml/properties (URL/host/endpoint keys), client classes and mapping annotations by hand, before the tool could list them",
+    "external_systems": [
+      [
+        "mall-admin",
+        "minio"
+      ],
+      [
+        "mall-admin",
+        "aliyun.oss"
+      ],
+      [
+        "mall-admin",
+        "logstash"
+      ],
+      [
+        "mall-portal",
+        "logstash"
+      ],
+      [
+        "mall-search",
+        "logstash"
+      ],
+      [
+        "mall-portal",
+        "alipay"
+      ]
+    ],
+    "unclear_items": [
+      [
+        "external_system",
+        "minio"
+      ],
+      [
+        "external_system",
+        "aliyun.oss"
+      ],
+      [
+        "external_system",
+        "logstash"
+      ],
+      [
+        "external_system",
+        "alipay"
+      ],
+      [
+        "guess",
+        "mall-demo requests mall-admin"
+      ],
+      [
+        "verdict",
+        "runtime"
+      ],
+      [
+        "messaging",
+        "mall-portal publishes rabbitmq"
+      ]
+    ],
+    "unclear_note": "code-level guesses/unresolved calls are summarised as counts, not listed one by one, so they are not part of this key"
   }
 }

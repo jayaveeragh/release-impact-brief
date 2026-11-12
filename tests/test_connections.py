@@ -7,6 +7,7 @@ import pytest
 from release_impact_brief.adapters import Extraction
 from release_impact_brief.facts import Confidence, EdgeKind, NodeKind
 from release_impact_brief.pipeline import analyze
+from release_impact_brief.system import unclear_items
 
 POM = "<project><groupId>shop</groupId><artifactId>{}</artifactId>{}</project>"
 
@@ -100,6 +101,21 @@ class Events {
 remote:
   billing: http://localhost:9000
   unknown: http://localhost:7777
+payments:
+  gateway-url: https://pay.example.com/api
+  callback-url: http://localhost:9000/paid
+  notify-url: ""
+mail:
+  host: ${MAIL_HOST}
+spring:
+  datasource:
+    url: jdbc:h2:mem:web
+  cloud:
+    gateway:
+      default-filters:
+        - name: CircuitBreaker
+          args:
+            fallbackUri: forward:/fallback
 """,
     "web/src/main/java/w/Remote.java": """\
 package w;
@@ -126,7 +142,8 @@ def facts(tmp_path_factory: pytest.TempPathFactory) -> Extraction:
 
 def edges(facts: Extraction, kind: EdgeKind) -> dict[tuple[str, str], Confidence]:
     return {(e.src.removeprefix("service:"), e.dst.split(":")[-1]): e.confidence
-            for e in facts.edges if e.kind == kind}  # fmt: skip
+            for e in facts.edges
+            if e.kind == kind and not e.dst.startswith("external:")}  # fmt: skip
 
 
 def service(facts: Extraction, name: str) -> dict[str, Any]:
@@ -139,6 +156,7 @@ def test_gateway_routes(facts: Extraction) -> None:
         "target": "http://legacy.example.com",
         "file": "gateway/src/main/resources/application.yml",
         "line": 10,
+        "via": "routes",
     }]  # fmt: skip
 
 
@@ -162,6 +180,7 @@ def test_data_stores(facts: Extraction) -> None:
         ("orders", "redis"): Confidence.LIKELY,  # via the common module
         ("orders", "rabbitmq"): Confidence.EXACT,
         ("orders", "kafka"): Confidence.LIKELY,
+        ("web", "h2"): Confidence.EXACT,
     }
     stores = {n.name: n.attributes for n in facts.nodes if n.kind == NodeKind.DATA_STORE}
     assert stores["postgresql"]["locations"] == [{
@@ -203,3 +222,55 @@ def test_connections_match_hand_written_answer_key(repo: str) -> None:
         for m in n.attributes.get("messaging", [])
     }
     assert found_messages == {tuple(x) for x in expected["messaging"]}
+
+    unknowns = key["unknowns"]
+    found_externals = {
+        (e.src.removeprefix("service:"), e.dst.removeprefix("external:"))
+        for e in facts.edges
+        if e.dst.startswith("external:")
+    }
+    assert found_externals == {tuple(x) for x in unknowns["external_systems"]}
+    assert all(e.confidence == Confidence.UNKNOWN for e in facts.edges
+               if e.dst.startswith("external:"))  # fmt: skip
+    items = unclear_items(facts.nodes, facts.edges)
+    assert {(i["kind"], i["subject"]) for i in items if i["kind"] != "code"} == {
+        tuple(x) for x in unknowns["unclear_items"]
+    }
+
+
+def test_outside_systems_are_grey_boxes_with_unknown_edges(facts: Extraction) -> None:
+    externals = {n.name: n.attributes for n in facts.nodes if n.kind == NodeKind.EXTERNAL_SYSTEM}
+    # Config keys grouped by prefix; payments.callback-url is billing (localhost:9000),
+    # the datasource is a data store, forward:/fallback is not a host.
+    assert sorted(externals) == ["legacy.example.com", "localhost:7777", "mail", "payments"]
+    assert externals["payments"]["locations"] == [{
+        "value": "https://pay.example.com/api",
+        "file": "web/src/main/resources/application.yml",
+        "line": 5,
+    }]  # fmt: skip
+    assert externals["mail"]["locations"][0]["value"] == "${MAIL_HOST}"
+    assert all(a["not_analyzed"] for a in externals.values())
+    to_external = {(e.src, e.kind, e.dst): e.confidence for e in facts.edges
+                   if e.dst.startswith("external:")}  # fmt: skip
+    assert to_external == {
+        ("service:gateway", EdgeKind.ROUTES, "external:legacy.example.com"): Confidence.UNKNOWN,
+        ("service:web", EdgeKind.REQUESTS, "external:localhost:7777"): Confidence.UNKNOWN,
+        ("service:web", EdgeKind.CONNECTS, "external:payments"): Confidence.UNKNOWN,
+        ("service:web", EdgeKind.CONNECTS, "external:mail"): Confidence.UNKNOWN,
+    }
+
+
+def test_unclear_items(facts: Extraction) -> None:
+    items = unclear_items(facts.nodes, facts.edges)
+    kinds = {(i["kind"], i["subject"]) for i in items if i["kind"] != "code"}
+    assert kinds == {
+        ("external_system", "legacy.example.com"),
+        ("external_system", "localhost:7777"),
+        ("external_system", "payments"),
+        ("external_system", "mail"),
+        ("guess", "web requests billing"),
+        ("messaging", "orders publishes rabbitmq"),
+    }
+    payments = next(i for i in items if i["subject"] == "payments")
+    assert payments["text"] == "web connects to payments: not analyzed, not in this repo"
+    assert payments["file"] == "web/src/main/resources/application.yml"

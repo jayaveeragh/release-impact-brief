@@ -250,3 +250,63 @@ def classify(nodes: Iterable[Node], edges: Iterable[Edge]) -> dict[str, Any]:
         evidence.append(_evidence(f"signals conflict: {reason}", None))  # a conclusion, not a file
     return {"layout": layout,
             "runtime": {"value": value, "evidence": evidence + signals + against}}  # fmt: skip
+
+
+_SYSTEM_EDGES = {EdgeKind.ROUTES, EdgeKind.REQUESTS, EdgeKind.USES, EdgeKind.PUBLISHES,
+                 EdgeKind.CONSUMES, EdgeKind.CONNECTS}  # fmt: skip
+
+
+def _item(kind: str, subject: str, text: str, file: str | None,
+          line: int | None = None) -> dict[str, Any]:  # fmt: skip
+    return {"kind": kind, "subject": subject, "text": text, "file": file, "line": line}
+
+
+def unclear_items(nodes: Iterable[Node], edges: Iterable[Edge]) -> list[dict[str, Any]]:
+    """Everything the facts can't settle, so a reader sees the gaps instead of a guess."""
+    nodes, edges = list(nodes), list(edges)
+    names = {n.id: n.name for n in nodes}
+    items = []
+    for n in nodes:
+        if n.kind == NodeKind.EXTERNAL_SYSTEM:
+            users = sorted({names[e.src] for e in edges if e.dst == n.id})
+            verbs = sorted({str(e.kind) for e in edges if e.dst == n.id})
+            if len(users) > 1:
+                verbs = [v.removesuffix("s") for v in verbs]  # "a, b connect to"
+            items.append(_item("external_system", n.name,
+                               f"{', '.join(users)} {'/'.join(verbs)} to {n.name}: "
+                               "not analyzed, not in this repo", n.file, n.start_line))  # fmt: skip
+    for e in edges:
+        if e.kind in _SYSTEM_EDGES and e.confidence == Confidence.GUESS:
+            subject = f"{names[e.src]} {e.kind} {names[e.dst]}"
+            items.append(_item("guess", subject, f"{subject} is a guess", e.evidence_file,
+                               e.evidence_line))  # fmt: skip
+    verdicts = classify(nodes, edges)
+    for label in ("layout", "runtime"):
+        if verdicts[label]["value"] == "unclear":
+            reasons = [e["text"] for e in verdicts[label]["evidence"] if e["file"] is None]
+            items.append(_item("verdict", label, f"{label} unclear: {'; '.join(reasons)}", None))
+    for n in nodes:
+        if n.kind == NodeKind.SERVICE:
+            for m in n.attributes.get("messaging", []):
+                if m["destination"] is None:
+                    subject = f"{n.name} {m['direction']} {m['broker']}"
+                    items.append(_item("messaging", subject,
+                                       f"{subject}: destination not resolved", m["file"],
+                                       m["line"]))  # fmt: skip
+        elif n.kind == NodeKind.ENDPOINT and not n.attributes["path_resolved"]:
+            items.append(_item("endpoint", n.name, f"{n.name}: path built from a constant",
+                               n.file, n.start_line))  # fmt: skip
+    # Main code only: gaps in test code don't change what ships.
+    guessed = sum(1 for e in edges if e.kind == EdgeKind.CALLS and e.confidence == Confidence.GUESS
+                  and not is_test(e.evidence_file))  # fmt: skip
+    unresolved = sum(len(n.attributes.get("unresolved_calls", [])) for n in nodes
+                     if n.kind == NodeKind.METHOD and not is_test(n.file))  # fmt: skip
+    if guessed:
+        items.append(_item("code", "guessed calls",
+                           f"{guessed} method calls in main code resolved only by a guess",
+                           None))  # fmt: skip
+    if unresolved:
+        items.append(_item("code", "unresolved calls",
+                           f"{unresolved} method calls in main code could not be resolved",
+                           None))  # fmt: skip
+    return items

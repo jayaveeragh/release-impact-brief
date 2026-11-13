@@ -6,6 +6,8 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 
 ## Assumptions
 
+- 2026-11-12 — Summary cost estimates in the Phase 3 plan (petclinic ≈ $0.60, mall ≈ $9 with Opus 5.5) are rough: ~2k input + ~200 output tokens per class — never measured; step 2 measures them with `count_tokens` — unverified
+- 2026-11-12 — Cost of a response that fell back to another model is priced at the answering model's list price from the response-level usage; Anthropic's actual billing of fallbacks (per-hop usage, credit repricing) can differ slightly — approximation, active
 - 2026-11-01 — Defects4J is mostly library code (no Spring endpoints), so it can test method-level impact only; endpoint/flow impact needs real fix commits from Spring repos — from memory, not checked — unverified, confirm in Phase 8
 - 2026-11-01 — Tree-sitter has no type information, so Java call resolution is heuristic; confidence labels are what keep it honest — known limitation of syntax-only parsing — active
 
@@ -32,6 +34,7 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 
 ## Trade-offs and known gaps
 
+- 2026-11-12 — LLM requests are non-streaming, so max_tokens should stay around 16k or below (larger replies risk HTTP timeouts); Haiku 5.5's higher price above 100K-token prompts isn't modelled; the 1-hour cache TTL isn't used (5-minute default) — fine for summaries sent back to back — active
 - 2026-11-11 — Outside-system gaps: config-declared links back into the repo (e.g. `spring.config.import: configserver:` → config server) are not edges yet, only excluded from grey boxes; outside systems reached only from code constants or SDK clients (mall's `MinioClient.builder()` with config values, Alipay SDK) are found through their config keys, not the code; one grey box per key prefix can merge two different systems under one prefix — active
 - 2026-11-11 — Connection gaps: URLs built from constants or method calls (only literals, `@Value` placeholders and Feign names are read); client classes in shared library modules (no owning service, skipped); Spring Cloud OpenFeign URLs from config (`spring.cloud.openfeign.client.config`); gateway routes defined in Java (`RouteLocator` beans); message destinations from enums/constants (mall's publisher); cross-service messaging links; data stores configured only through custom keys (mall's `minio.endpoint`) — active
 - 2026-11-10 — Classification gaps: microservices without Spring Cloud (plain Kubernetes services calling each other over HTTP) come out "unclear" until step 3 adds service-to-service calls as a signal; config served by an external config repo (microservices uses one on GitHub) is invisible, so those services show no port or datasource; `server.port` only from the default profile (mall-portal's 8085 lives in dev/prod files, so it shows none); non-Spring entry points (`main` without `@SpringBootApplication`, Quarkus, Micronaut) aren't services yet — active

@@ -14,6 +14,8 @@ dependencies = [
     "tree-sitter-java>=0.23.5",
     "pyyaml>=6.0.3",  # safe_load / compose only: repo files are untrusted
     "defusedxml>=0.7.1",  # pom.xml is untrusted: no entity expansion
+    "anthropic>=2.8.0",
+    "python-dotenv>=1.2.4",  # reads ANTHROPIC_API_KEY etc. from .env (gitignored)
 ]
 
 [project.scripts]
@@ -47,5 +49,8 @@ files = ["src", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra -m 'not network'"
-markers = ["network: needs internet access to github.com (run with -m network)"]
+addopts = "-ra -m 'not network and not llm'"
+markers = [
+    "network: needs internet access to github.com (run with -m network)",
+    "llm: calls the real LLM API, costs money, needs ANTHROPIC_API_KEY (run with -m llm)",
+]

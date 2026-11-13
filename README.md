@@ -1,6 +1,6 @@
 # release-impact-brief
 
-> Work in progress. Phases 0–2 done (foundation, Java facts, system structure); Phase 3 (LLM interpretation) next.
+> Work in progress. Phases 0–2 done (foundation, Java facts, system structure); Phase 3 (LLM interpretation) in progress.
 
 Paste a public GitHub URL and get a visual explanation of the repository, from architecture down to the branches inside one endpoint. Describe a bug and get a one-page brief of what a likely fix could affect, to help decide whether the fix goes into a release.
 
@@ -21,7 +21,8 @@ Design rule: **facts first, creativity on top.** Deterministic parsing produces 
 | 2     | `44ae30a`     | Build and deployment files: Maven and Gradle modules (with parent, sub-module and module-to-module dependency links), Dockerfiles, Docker Compose services, Kubernetes objects, Spring `application.yml`/`.properties` with line numbers and secrets redacted. Files are read as data, never run. `rib facts` now re-extracts on every run instead of serving a stale cache |
 | 2     | `da94c66`     | Services and repo classification: each Spring Boot app becomes a `service` (name, module, port, roles such as gateway, discovery server, config server, each with the file and line it came from); `rib structure` classifies layout (single project / multi-module / monorepo) and runtime style (monolith / modular monolith / microservices / library / unclear) with evidence. Matches hand-written answer keys for all 3 test repos |
 | 2     | `4ff78eb`     | Connections between services: gateway routes, HTTP calls (`lb://` / `http://` URLs, Feign, discovery lookups, `@Value` hosts from config), data stores (MySQL, Postgres, H2, HSQLDB, Redis, MongoDB, RabbitMQ, Kafka, Elasticsearch) from config or dependencies, and messaging (publish / consume). Each with confidence and file:line; targets that match no service are listed, not guessed. The fact store rebuilds itself when its schema changes. Matches hand-written answer keys for all 3 repos |
-| 2     | _next commit_ | Unknowns made visible: outside systems (from config URL/host keys and calls that match no service) become grey-box `external_system` facts with `unknown` edges; `rib structure` ends with an unclear-items list (outside systems, guessed links, unclear verdicts, unresolved message destinations, main-code call gaps). Completes Phase 2 |
+| 2     | `7834966`     | Unknowns made visible: outside systems (from config URL/host keys and calls that match no service) become grey-box `external_system` facts with `unknown` edges; `rib structure` ends with an unclear-items list (outside systems, guessed links, unclear verdicts, unresolved message destinations, main-code call gaps). Completes Phase 2 |
+| 3     | _next commit_ | LLM access: one small provider interface (Claude through the Anthropic SDK, plus a free offline fake for tests), settings from `.env`, and cost control that can be switched off: before a run it estimates the worst-case cost with the API's token counter and refuses to pass a spending cap; actual cost is always added up |
 
 ## Development
 
@@ -61,6 +62,10 @@ sqlite3 .rib/facts.sqlite "select kind, confidence, count(*) from edges group by
 ```
 
 This classifies the repo's layout and runtime style, lists the evidence for each verdict (file and line), the services, how they connect (routes, HTTP calls, data stores, messaging, outside systems), and a list of everything it couldn't settle. When signals conflict it says "unclear" and shows both sides.
+
+### LLM settings
+
+Copy `.env.example` to `.env` (gitignored) and set `ANTHROPIC_API_KEY`. `RIB_MODEL` picks the model (`fake` runs offline for free). With `RIB_COST_CONTROL=on` (default) every run first estimates its worst-case cost and stops if it would pass `RIB_SPEND_CAP_USD` (default $1); `off` skips the estimate and the cap. Tests never call the API; `.venv/bin/pytest -m llm` runs the one live test (costs well under a cent).
 
 There is no web UI yet; the first browser view arrives in Phase 4.
 

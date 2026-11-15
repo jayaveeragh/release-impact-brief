@@ -156,6 +156,21 @@ def add_services(out: Extraction) -> None:
             out.edges.append(Edge(f"contains:{node_id}>{module.id}", node_id, module.id,
                                   EdgeKind.CONTAINS, Confidence.EXACT, main.file,
                                   main.start_line, _RESOLVER))  # fmt: skip
+    _expose_and_own(out, modules)
+
+
+def _expose_and_own(out: Extraction, modules: dict[str, Node]) -> None:
+    """Endpoints and entities belong to the service whose module holds their file."""
+    by_module = {n.attributes["module"]: n.id for n in out.nodes
+                 if n.kind == NodeKind.SERVICE and n.attributes["module"]}  # fmt: skip
+    kinds = {NodeKind.ENDPOINT: EdgeKind.EXPOSES, NodeKind.ENTITY: EdgeKind.OWNS}
+    for n in [n for n in out.nodes if n.kind in kinds]:
+        directory = module_dir(n.file, modules)
+        service = by_module.get(f"build:module:{directory}") if directory is not None else None
+        if service is not None:
+            kind = kinds[n.kind]
+            out.edges.append(Edge(f"{kind}:{service}>{n.id}", service, n.id, kind,
+                                  Confidence.EXACT, n.file, n.start_line, _RESOLVER))  # fmt: skip
 
 
 def datasource_url(value: str) -> str:

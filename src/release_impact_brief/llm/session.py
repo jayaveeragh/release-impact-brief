@@ -64,6 +64,7 @@ class LlmSession:
         self.settings = settings
         self.spent_usd = 0.0
         self.unpriced_calls = 0  # responses from a model without a known price
+        self.completed = 0  # requests answered or failed so far (for progress display)
         self._lock = threading.Lock()
 
     def estimate(self, requests: Iterable[LlmRequest]) -> Estimate:
@@ -122,6 +123,9 @@ class LlmSession:
                 return self._one(request)
             except LlmError as error:
                 return error
+            finally:
+                with self._lock:
+                    self.completed += 1
 
         if self.settings.concurrency == 1:
             return [attempt(r) for r in requests]

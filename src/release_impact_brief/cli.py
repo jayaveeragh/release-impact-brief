@@ -1,7 +1,6 @@
 """Command-line entry point: `rib`."""
 
 import argparse
-import json
 import sys
 from collections import Counter
 from collections.abc import Sequence
@@ -24,7 +23,7 @@ from release_impact_brief.llm import (
 from release_impact_brief.pipeline import analyze
 from release_impact_brief.summaries import Summarizer, SummaryCache, SummaryResult
 from release_impact_brief.system import classify, unclear_items
-from release_impact_brief.views import generate_view
+from release_impact_brief.views import save_view
 
 
 def _fetch(args: argparse.Namespace) -> int:
@@ -194,18 +193,28 @@ def _run_summaries(args: argparse.Namespace, settings: Settings, session: LlmSes
 
 def _write_view(args: argparse.Namespace, summarizer: Summarizer, result: SummaryResult,
                 session: LlmSession) -> None:  # fmt: skip
-    view = generate_view(summarizer.facts, result, summarizer.repo, summarizer.sha, session,
-                         summarizer.cache)  # fmt: skip
-    owner, name = summarizer.repo.rstrip("/").split("/")[-2:]
-    path = args.db.parent / "views" / f"{owner}__{name}@{summarizer.sha[:12]}.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(view, indent=2))
+    path, view = save_view(summarizer.facts, result, summarizer.repo, summarizer.sha, session,
+                           summarizer.cache, args.db.parent / "views")  # fmt: skip
     kinds = Counter(s["type"] for s in view["sections"])
     print(f"\nview spec:   {path}")
     print("sections:    " + (", ".join(f"{k} {v}" for k, v in sorted(kinds.items())) or "none"))
     print(f"removed:     {len(view['removed'])} references that matched no fact")
     for r in view["removed"][:10]:
         print(f"  - {r['where']}: {r['ref']} ({r['reason']})")
+
+
+def _serve(args: argparse.Namespace) -> int:
+    import uvicorn
+
+    from release_impact_brief.web.app import create_app
+    from release_impact_brief.web.jobs import JobRunner
+
+    static = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+    if not static.is_dir():
+        print("note: no built UI (frontend/dist); run `npm run build` in frontend/ first")
+    print(f"release-impact-brief: http://127.0.0.1:{args.port}")
+    uvicorn.run(create_app(JobRunner(args.db), static), host="127.0.0.1", port=args.port)
+    return 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -256,6 +265,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     view.add_argument("--estimate-only", action="store_true",
                       help="print the plan and cost estimate, then stop")  # fmt: skip
     view.set_defaults(func=_summarize, view=True)
+
+    serve = sub.add_parser("serve", help="run the web app on this machine (127.0.0.1 only)")
+    serve.add_argument("--port", type=int, default=8765)
+    serve.add_argument("--db", type=Path, default=Path(".rib/facts.sqlite"), help="fact store")
+    serve.set_defaults(func=_serve)
 
     args = parser.parse_args(argv)
     try:

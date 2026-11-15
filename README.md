@@ -1,6 +1,6 @@
 # release-impact-brief
 
-> Work in progress. Phases 0–3 done (foundation, Java facts, system structure, LLM interpretation); Phase 4 (web app) next.
+> Work in progress. Phases 0–4 done (foundation, Java facts, system structure, LLM interpretation, web app); Phase 5 (drill-down and branch map) next.
 
 Paste a public GitHub URL and get a visual explanation of the repository, from architecture down to the branches inside one endpoint. Describe a bug and get a one-page brief of what a likely fix could affect, to help decide whether the fix goes into a release.
 
@@ -25,7 +25,8 @@ Design rule: **facts first, creativity on top.** Deterministic parsing produces 
 | 3     | `cf194ff`     | LLM access: one small provider interface (Claude through the Anthropic SDK, plus a free offline fake for tests), settings from `.env`, and cost control that can be switched off: before a run it estimates the worst-case cost with the API's token counter and refuses to pass a spending cap; actual cost is always added up |
 | 3     | `1620830`     | Bottom-up summaries: `rib summarize` explains each class (from its facts and source), then each module, then the whole repo, with repo content fenced off as untrusted data. Answers are cached, so a re-run is free; requests run in parallel; with cost control on it shows a cost range and asks before spending. `RIB_MODEL=fake` runs it for free |
 | 3     | `4284422`     | View spec and validator (completes Phase 3): `rib view` asks the LLM how to present the repo (architecture diagram, flows, narrative) using short fact IDs, then a validator maps every reference back to a real fact and removes anything invented: unknown boxes, links whose fact doesn't connect the boxes drawn, flows with fewer than two real steps. Unsupported links survive only when marked inferred with a reason. Confidence and the layout/runtime verdicts always come from the facts |
-| 3     | _next commit_ | Free local models: an Ollama provider runs open models on your own machine (default `qwen3:14b`), so summaries and views cost nothing and no code leaves the machine; Claude stays available as an opt-in |
+| 3     | `92e87d6`     | Free local models: an Ollama provider runs open models on your own machine (default `qwen3:14b`), so summaries and views cost nothing and no code leaves the machine; Claude stays available as an opt-in |
+| 4     | _next commit_ | Web app (first showable milestone): `rib serve` opens a local page where you paste a GitHub URL, watch the analysis progress, and get an interactive architecture diagram (boxes inside boxes, links styled by confidence, dashed for anything outside the repo or inferred), flows, a narrative with clickable citations, and tables for services, endpoints, data model, data stores / outside systems and unclear items — every row links to the exact line on GitHub. New facts: a service exposes the endpoints and owns the entities in its module |
 
 ## Development
 
@@ -84,7 +85,14 @@ This writes a summary for each class, each module and the whole repo, using the 
 
 This runs the summaries, then asks the LLM how to present the repo and writes a validated view spec to `.rib/views/<owner>__<repo>@<commit>.json`. Every box, step and link in it points at a real fact; anything the LLM invented is removed and listed.
 
-There is no web UI yet; the first browser view arrives in Phase 4.
+### Web app
+
+```bash
+(cd frontend && npm ci && npm run build)   # once, and after UI changes
+.venv/bin/rib serve                         # http://127.0.0.1:8765
+```
+
+Paste a public GitHub URL and the analysis runs in the background (fetch, facts, summaries, view) with progress on the page; with a paid model and cost control on it shows the estimate and waits for you to confirm. The server only listens on 127.0.0.1 and never sends settings or keys to the browser. For UI work, `npm run dev` in `frontend/` serves the UI with hot reload and forwards `/api` to `rib serve`.
 
 ## Docs
 

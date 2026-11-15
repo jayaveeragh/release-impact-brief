@@ -54,6 +54,8 @@ class EdgeKind(StrEnum):
     PUBLISHES = "publishes"  # service -> message broker
     CONSUMES = "consumes"  # service -> message broker
     CONNECTS = "connects"  # service -> external system named in its config
+    EXPOSES = "exposes"  # service -> endpoint in its module
+    OWNS = "owns"  # service -> JPA entity in its module
 
 
 _SHA_RE = re.compile(r"[0-9a-f]{40}")

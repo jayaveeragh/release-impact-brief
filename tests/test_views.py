@@ -206,6 +206,15 @@ def test_flows_and_narratives(table: FactTable) -> None:
                for r in removed)  # fmt: skip
 
 
+def test_grouped_citations_are_checked_one_by_one(table: FactTable) -> None:
+    web, orders = alias(table, "service:web"), alias(table, "service:orders")
+    raw = {"type": "narrative", "title": "T",
+           "body": f"Two apps [fact:{web}, fact:{orders}, fact:f999] talk."}  # fmt: skip
+    [kept], removed = validate_view({"sections": [raw]}, table)
+    assert kept["body"] == "Two apps [fact:service:web][fact:service:orders] talk."
+    assert [r["ref"] for r in removed] == ["fact:f999"]
+
+
 def test_inferred_items_need_a_reason(table: FactTable) -> None:
     inferred = [
         {"label": "Mail provider", "reason": "SMTP host in config",

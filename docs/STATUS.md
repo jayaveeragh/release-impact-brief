@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-11-15
+Last updated: 2026-11-16
 
 ## Where we are
 
@@ -34,7 +34,18 @@ Phase 1 done criterion met: `rib facts` on spring-petclinic @ `500158f` matches 
 
 Phase 3 done criterion met on the fake provider: `rib view` writes a valid view spec, and `test_generated_view_holds_only_real_facts` feeds invented nodes and links that never survive. First real run done 2026-11-15 with the free local model (`ollama:qwen3:14b`) on spring-petclinic: valid, sensible view in ~4 min (see PROJECT_NOTES). The microservices repo hasn't been run with a real model yet.
 
-## Phase 4–6 plans: approved 2026-11-15 (see DECISIONS); commits per phase from now on
+## Phase 4: Web app overview (plan approved 2026-11-15)
+
+| Step | State |
+|---|---|
+| 1. FastAPI backend: background analyses (one at a time) with stages and progress, cost confirmation for paid models, saved views; `rib serve` (127.0.0.1 only) | done (next commit) |
+| 2. Frontend: React 19 + TypeScript + Vite, React Flow + ELK | done (next commit) |
+| 3. Architecture diagram: nested groups, links styled by confidence, dashed outside/inferred, click for source | done (next commit) |
+| 4. Panels: services, endpoints, data model, stores & outside systems, narrative with citations, flows, unclear items; GitHub links at the analysed commit | done (next commit) |
+
+Done when: the owner reviews the overview for both petclinic repos in the browser and would demo it — **waiting for the owner's review**.
+
+## Phases 5–6: plans approved 2026-11-15 (see DECISIONS); commits per phase
 
 ## Phase 2: System structure (done)
 
@@ -53,7 +64,7 @@ Phase 2 done criterion met: both petclinic repos are classified correctly with t
 
 1. Check CI on GitHub → Actions for the latest push.
 2. `.rib/facts.sqlite` rebuilds itself when the schema changes, and `rib` re-extracts every run: no more `rm -rf .rib`.
-3. Next: Phase 4 (web app overview). Model setup: free local `ollama:qwen3:14b` is the default — `ollama serve` must be running (and `ollama pull qwen3:14b` done once); no API key or credits needed.
+3. Next: owner reviews Phase 4 in the browser (`rib serve`, open both petclinic views); then Phase 5 starts with the GitNexus README check. Ollama must be running (`brew services start ollama`).
 
 Identity check for commits: run `git config user.email` (not `--global`) inside the repo; it must show the jayaveeragh noreply address.
 

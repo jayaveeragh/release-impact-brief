@@ -194,3 +194,28 @@ def test_structure_matches_hand_written_answer_key(repo: str) -> None:
     assert found == {
         (s["name"], s["module"], s["main_class"], tuple(s["roles"])) for s in expected["services"]
     }
+
+
+def test_services_expose_endpoints_and_own_entities_in_their_module(tmp_path: Path) -> None:
+    facts = write(tmp_path, {
+        "pom.xml": POM.format("shop", "<modules><module>a</module><module>lib</module></modules>"),
+        "a/pom.xml": POM.format("a", ""),
+        "a/src/main/java/a/AApp.java": app("a", "AApp"),
+        "a/src/main/java/a/Hi.java": (
+            "package a;\n@RestController\nclass Hi {\n@GetMapping(\"/hi\")\n"
+            "public String hi() { return \"\"; }\n}\n"
+        ),
+        "a/src/main/java/a/Pet.java": (
+            "package a;\nimport jakarta.persistence.Entity;\n@Entity\nclass Pet {}\n"
+        ),
+        "lib/pom.xml": POM.format("lib", ""),
+        "lib/src/main/java/l/Tag.java": (
+            "package l;\nimport jakarta.persistence.Entity;\n@Entity\nclass Tag {}\n"
+        ),
+    })  # fmt: skip
+    links = {(e.kind, e.src, e.dst) for e in facts.edges
+             if e.kind in (EdgeKind.EXPOSES, EdgeKind.OWNS)}  # fmt: skip
+    assert links == {
+        (EdgeKind.EXPOSES, "service:a", "java:endpoint:GET /hi"),
+        (EdgeKind.OWNS, "service:a", "java:entity:a.Pet"),  # lib's Tag has no service
+    }

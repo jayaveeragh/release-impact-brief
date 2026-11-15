@@ -16,6 +16,8 @@ dependencies = [
     "defusedxml>=0.7.1",  # pom.xml is untrusted: no entity expansion
     "anthropic>=2.8.0",
     "python-dotenv>=1.2.4",  # reads ANTHROPIC_API_KEY etc. from .env (gitignored)
+    "fastapi>=0.163.0",
+    "uvicorn>=0.54.0",
 ]
 
 [project.scripts]
@@ -28,6 +30,7 @@ dev = [
     "mypy>=2.4",
     "types-pyyaml>=6.0.12",
     "types-defusedxml>=0.7.0",
+    "httpx>=0.28.1",  # FastAPI's TestClient
 ]
 
 [tool.hatch.build.targets.wheel]

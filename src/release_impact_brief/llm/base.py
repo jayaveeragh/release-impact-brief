@@ -36,6 +36,10 @@ class LlmAuthError(Exception):
     """No usable credentials. Not an LlmError: it stops a run instead of failing one request."""
 
 
+class LlmUnavailable(Exception):
+    """The model can't be reached (local server down, model not installed). Stops a run."""
+
+
 class LlmRefusal(LlmError):
     """The model (and any fallback) declined the request."""
 

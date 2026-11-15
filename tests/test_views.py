@@ -147,6 +147,16 @@ def test_invented_nodes_never_survive(table: FactTable) -> None:
     assert any(r["where"].endswith("groups[1]") and "empty" in r["reason"] for r in removed)
 
 
+def test_a_bare_short_id_from_the_table_is_accepted(table: FactTable) -> None:
+    web, orders = alias(table, "service:web"), alias(table, "service:orders")
+    requests = alias(table, "requests:service:web>service:orders")
+    raw = architecture(table, edges=[{"from": web, "to": orders, "label": "buys via",
+                                      "ref": requests, "inferred_reason": None}])  # fmt: skip
+    [section], removed = validate_view({"sections": [raw]}, table)
+    assert removed == []
+    assert section["edges"][0]["ref"] == "fact:requests:service:web>service:orders"
+
+
 def test_edges_need_a_matching_fact_or_a_stated_reason(table: FactTable) -> None:
     web, orders = alias(table, "service:web"), alias(table, "service:orders")
     pg = alias(table, "datastore:postgresql")

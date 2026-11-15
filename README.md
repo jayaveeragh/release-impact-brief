@@ -24,7 +24,8 @@ Design rule: **facts first, creativity on top.** Deterministic parsing produces 
 | 2     | `7834966`     | Unknowns made visible: outside systems (from config URL/host keys and calls that match no service) become grey-box `external_system` facts with `unknown` edges; `rib structure` ends with an unclear-items list (outside systems, guessed links, unclear verdicts, unresolved message destinations, main-code call gaps). Completes Phase 2 |
 | 3     | `cf194ff`     | LLM access: one small provider interface (Claude through the Anthropic SDK, plus a free offline fake for tests), settings from `.env`, and cost control that can be switched off: before a run it estimates the worst-case cost with the API's token counter and refuses to pass a spending cap; actual cost is always added up |
 | 3     | `1620830`     | Bottom-up summaries: `rib summarize` explains each class (from its facts and source), then each module, then the whole repo, with repo content fenced off as untrusted data. Answers are cached, so a re-run is free; requests run in parallel; with cost control on it shows a cost range and asks before spending. `RIB_MODEL=fake` runs it for free |
-| 3     | _next commit_ | View spec and validator (completes Phase 3): `rib view` asks the LLM how to present the repo (architecture diagram, flows, narrative) using short fact IDs, then a validator maps every reference back to a real fact and removes anything invented: unknown boxes, links whose fact doesn't connect the boxes drawn, flows with fewer than two real steps. Unsupported links survive only when marked inferred with a reason. Confidence and the layout/runtime verdicts always come from the facts |
+| 3     | `4284422`     | View spec and validator (completes Phase 3): `rib view` asks the LLM how to present the repo (architecture diagram, flows, narrative) using short fact IDs, then a validator maps every reference back to a real fact and removes anything invented: unknown boxes, links whose fact doesn't connect the boxes drawn, flows with fewer than two real steps. Unsupported links survive only when marked inferred with a reason. Confidence and the layout/runtime verdicts always come from the facts |
+| 3     | _next commit_ | Free local models: an Ollama provider runs open models on your own machine (default `qwen3:14b`), so summaries and views cost nothing and no code leaves the machine; Claude stays available as an opt-in |
 
 ## Development
 
@@ -67,7 +68,9 @@ This classifies the repo's layout and runtime style, lists the evidence for each
 
 ### LLM settings
 
-Copy `.env.example` to `.env` (gitignored) and set `ANTHROPIC_API_KEY`. `RIB_MODEL` picks the model (`fake` runs offline for free). With `RIB_COST_CONTROL=on` (default) every run first estimates its worst-case cost and stops if it would pass `RIB_SPEND_CAP_USD` (default $1); `off` skips the estimate and the cap. Tests never call the API; `.venv/bin/pytest -m llm` runs the one live test (costs well under a cent).
+By default the LLM work runs on a **free open model on your own machine** through [Ollama](https://ollama.com): install Ollama, then `ollama serve` and `ollama pull qwen3:14b` (about 9 GB; needs roughly 16 GB of memory). Nothing is sent anywhere and nothing is billed; it is slower and less sharp than a hosted model.
+
+Copy `.env.example` to `.env` (gitignored) to change settings. `RIB_MODEL` picks the model: `ollama:<model>` (free, local), a Claude model ID such as `claude-opus-5-5` (paid, needs `ANTHROPIC_API_KEY`), or `fake` (canned answers). For paid models, `RIB_COST_CONTROL=on` (default) estimates each run's cost first and stops at `RIB_SPEND_CAP_USD` (default $1); `off` skips the estimate and the cap. Tests never call a model; `.venv/bin/pytest -m llm` runs the one live test against whatever `RIB_MODEL` is set to.
 
 ```bash
 .venv/bin/rib summarize https://github.com/spring-projects/spring-petclinic [--estimate-only] [--yes]

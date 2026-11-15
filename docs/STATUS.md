@@ -32,7 +32,7 @@ Phase 1 done criterion met: `rib facts` on spring-petclinic @ `500158f` matches 
 | 3. View spec schema + generation with structured output; `rib view <url>` | done (next commit) |
 | 4. Validator: unknown fact references removed and logged, inferred items marked; tests that feed invented nodes | done (next commit) |
 
-Phase 3 done criterion met on the fake provider: `rib view` writes a valid view spec, and `test_generated_view_holds_only_real_facts` feeds invented nodes and links that never survive. Still to do once an API key is in `.env`: one real `rib view` run on each petclinic repo to see the LLM's actual output.
+Phase 3 done criterion met on the fake provider: `rib view` writes a valid view spec, and `test_generated_view_holds_only_real_facts` feeds invented nodes and links that never survive. First real run done 2026-11-15 with the free local model (`ollama:qwen3:14b`) on spring-petclinic: valid, sensible view in ~4 min (see PROJECT_NOTES). The microservices repo hasn't been run with a real model yet.
 
 ## Phase 4–6 plans: approved 2026-11-15 (see DECISIONS); commits per phase from now on
 
@@ -53,7 +53,7 @@ Phase 2 done criterion met: both petclinic repos are classified correctly with t
 
 1. Check CI on GitHub → Actions for the latest push.
 2. `.rib/facts.sqlite` rebuilds itself when the schema changes, and `rib` re-extracts every run: no more `rm -rf .rib`.
-3. Next: Phase 4 (web app overview). Owner is setting up an API key + Console credits (the $20 claude.ai plan doesn't cover the API); then `pytest -m llm`, `rib view <url> --estimate-only`, and one real `rib view` per petclinic repo.
+3. Next: Phase 4 (web app overview). Model setup: free local `ollama:qwen3:14b` is the default — `ollama serve` must be running (and `ollama pull qwen3:14b` done once); no API key or credits needed.
 
 Identity check for commits: run `git config user.email` (not `--global`) inside the repo; it must show the jayaveeragh noreply address.
 

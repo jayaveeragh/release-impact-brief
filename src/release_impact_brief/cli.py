@@ -15,6 +15,7 @@ from release_impact_brief.llm import (
     LlmAuthError,
     LlmError,
     LlmSession,
+    LlmUnavailable,
     Settings,
     SpendingCapExceeded,
     load_settings,
@@ -144,7 +145,7 @@ def _summarize(args: argparse.Namespace) -> int:
                                 session, cache)  # fmt: skip
     try:
         return _run_summaries(args, settings, session, summarizer)
-    except (LlmAuthError, LlmError, SpendingCapExceeded, CostUnknown) as error:
+    except (LlmAuthError, LlmUnavailable, LlmError, SpendingCapExceeded, CostUnknown) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
     finally:
@@ -159,7 +160,10 @@ def _run_summaries(args: argparse.Namespace, settings: Settings, session: LlmSes
     view = " + 1 view spec" if args.view else ""
     print(f"to ask:      {plan.class_requests} class summaries ({plan.class_cached} cached), "
           f"then up to {plan.later_requests} module/repo summaries{view}")  # fmt: skip
-    if settings.cost_control:
+    free = plan.max_usd == 0
+    if free:
+        print("cost:        free (the model runs on this machine); local models are slower")
+    elif settings.cost_control:
         low, high = plan.min_usd or 0, plan.max_usd or 0
         print(f"cost:        at least ${low:.2f}, at most ${high:.2f} (worst case: every "
               f"answer at full length); cap ${settings.spend_cap_usd:.2f}")  # fmt: skip
@@ -167,7 +171,7 @@ def _run_summaries(args: argparse.Namespace, settings: Settings, session: LlmSes
         print("cost:        cost control is off: no estimate, no cap")
     if args.estimate_only:
         return 0
-    ask = settings.cost_control and plan.class_requests and not args.yes
+    ask = settings.cost_control and plan.class_requests and not free and not args.yes
     if ask and input("Proceed? [y/N] ").strip().lower() not in ("y", "yes"):
         print("Stopped; nothing was spent.")
         return 1

@@ -31,6 +31,8 @@ PRICES: dict[str, tuple[float, float, float, float]] = {
 
 def cost_usd(model: str, usage: Usage) -> float | None:
     """Cost of one response in US dollars; None if the model has no known price."""
+    if model.startswith("ollama:"):
+        return 0.0  # runs on this machine
     if model not in PRICES:
         return None
     inp, out, write, read = PRICES[model]

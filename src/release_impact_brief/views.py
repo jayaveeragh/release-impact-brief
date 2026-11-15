@@ -142,7 +142,13 @@ class _Validator:
         self.removed.append({"where": where, "ref": ref, "reason": reason})
 
     def resolve(self, ref: Any, where: str) -> str | None:
-        """`fact:<alias or real id>` -> the real fact id, or None (logged)."""
+        """`fact:<alias or real id>` -> the real fact id, or None (logged).
+
+        A bare short id (`e7`) is accepted too, but only when it is exactly one of the
+        table's ids: models often drop the prefix, and an exact table id can't be invented.
+        """
+        if isinstance(ref, str) and ref in self.table.aliases:
+            ref = f"fact:{ref}"
         match = _REF.match(ref) if isinstance(ref, str) else None
         if match is None:
             self.drop(where, ref, "not a fact reference")

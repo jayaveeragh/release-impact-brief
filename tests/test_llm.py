@@ -30,7 +30,7 @@ REQ = LlmRequest(system="You summarise code.", prompt="x" * 400, max_tokens=1000
 
 def test_settings_defaults() -> None:
     s = load_settings({}, env_file=None)
-    assert s == Settings(model="claude-opus-5-5", effort="medium", cost_control=True,
+    assert s == Settings(model="ollama:qwen3:14b", effort="medium", cost_control=True,
                          spend_cap_usd=1.0, concurrency=4)  # fmt: skip
 
 
@@ -300,4 +300,5 @@ def test_live_round_trip_with_cost_control() -> None:
     estimate = s.estimate([request])
     [response] = s.run([request])
     assert response.text.replace(" ", "") == '{"ok":true}'
-    assert (estimate.min_usd or 0) <= s.spent_usd <= (estimate.max_usd or 1) < 0.05
+    assert estimate.min_usd is not None and estimate.max_usd is not None
+    assert estimate.min_usd <= s.spent_usd <= estimate.max_usd < 0.05  # $0 for local models

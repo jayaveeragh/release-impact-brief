@@ -1,10 +1,13 @@
 """LLM settings from the environment and `.env` (gitignored).
 
-RIB_MODEL         model ID, or `fake` for the offline provider (default claude-opus-5-5)
+RIB_MODEL         `ollama:<model>` for a free local open model (default ollama:qwen3:14b),
+                  a Claude model ID such as claude-opus-5-5 (paid), or `fake` (canned answers)
 RIB_EFFORT        low | medium | high | xhigh | max (default medium)
 RIB_COST_CONTROL  on | off: estimate and cap spending before each run (default on)
 RIB_SPEND_CAP_USD cap per run in US dollars when cost control is on (default 1.0)
 RIB_CONCURRENCY   requests sent in parallel, 1-32 (default 4)
+RIB_OLLAMA_URL    where Ollama listens (default http://localhost:11434)
+RIB_OLLAMA_CONTEXT context window asked of Ollama, in tokens (default 32768)
 ANTHROPIC_API_KEY read by the Anthropic SDK itself; never stored or printed here
 """
 
@@ -18,6 +21,7 @@ from dotenv import dotenv_values, load_dotenv
 from release_impact_brief.llm.anthropic_provider import AnthropicProvider
 from release_impact_brief.llm.base import Provider
 from release_impact_brief.llm.fake import FakeProvider
+from release_impact_brief.llm.ollama_provider import OllamaProvider
 
 _EFFORTS = ("low", "medium", "high", "xhigh", "max")
 _ON = ("on", "true", "1", "yes")
@@ -31,6 +35,8 @@ class Settings:
     cost_control: bool
     spend_cap_usd: float
     concurrency: int = 4
+    ollama_url: str = "http://localhost:11434"
+    ollama_context: int = 32768
 
 
 def load_settings(env: Mapping[str, str] | None = None,
@@ -66,11 +72,22 @@ def load_settings(env: Mapping[str, str] | None = None,
         raise ValueError(
             f"RIB_CONCURRENCY must be a whole number from 1 to 32, not {raw_workers!r}"
         )
-    return Settings(source.get("RIB_MODEL", "claude-opus-5-5"), effort, control in _ON, cap,
-                    int(raw_workers))  # fmt: skip
+    url = source.get("RIB_OLLAMA_URL", "http://localhost:11434")
+    if not url.startswith(("http://", "https://")):
+        raise ValueError(f"RIB_OLLAMA_URL must start with http:// or https://, not {url!r}")
+    raw_context = source.get("RIB_OLLAMA_CONTEXT", "32768")
+    if not raw_context.isdigit() or int(raw_context) < 1024:
+        raise ValueError(
+            f"RIB_OLLAMA_CONTEXT must be a number of tokens >= 1024, not {raw_context!r}"
+        )
+    return Settings(source.get("RIB_MODEL", "ollama:qwen3:14b"), effort, control in _ON, cap,
+                    int(raw_workers), url, int(raw_context))  # fmt: skip
 
 
 def make_provider(settings: Settings) -> Provider:
     if settings.model == "fake":
         return FakeProvider()
+    if settings.model.startswith("ollama:"):
+        return OllamaProvider(settings.model.removeprefix("ollama:"), settings.ollama_url,
+                              settings.ollama_context)  # fmt: skip
     return AnthropicProvider(settings.model, settings.effort)

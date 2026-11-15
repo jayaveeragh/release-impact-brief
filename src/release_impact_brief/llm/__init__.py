@@ -8,10 +8,12 @@ from release_impact_brief.llm.base import (
     LlmRequest,
     LlmResponse,
     LlmTruncated,
+    LlmUnavailable,
     Provider,
     Usage,
 )
 from release_impact_brief.llm.fake import FakeProvider
+from release_impact_brief.llm.ollama_provider import OllamaProvider
 from release_impact_brief.llm.session import (
     PRICES,
     CostUnknown,
@@ -35,6 +37,8 @@ __all__ = [
     "LlmResponse",
     "LlmSession",
     "LlmTruncated",
+    "LlmUnavailable",
+    "OllamaProvider",
     "Provider",
     "Settings",
     "SpendingCapExceeded",

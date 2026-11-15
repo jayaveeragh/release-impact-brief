@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-11-12
+Last updated: 2026-11-14
 
 ## Where we are
 
@@ -27,9 +27,9 @@ Phase 1 done criterion met: `rib facts` on spring-petclinic @ `500158f` matches 
 
 | Step | State |
 |---|---|
-| 1. Provider interface (Anthropic SDK + offline fake), settings from `.env`, cost tracking, spending cap; cost control can be switched off | done (next commit; offline tests; live test not run yet) |
-| 2. Bottom-up summaries (class → service/module → repo) from facts + selected code, repo content delimited as data, cached by commit + prompt version + model | next |
-| 3. View spec schema + generation with structured output; `rib view <url>` | |
+| 1. Provider interface (Anthropic SDK + offline fake), settings from `.env`, cost tracking, spending cap; cost control can be switched off | done (cf194ff; offline tests; live test not run yet) |
+| 2. Bottom-up summaries (class → module → repo) from facts + source, repo content fenced as untrusted data, cached by exact request; `rib summarize` | done (next commit; offline tests; not yet run against the real API) |
+| 3. View spec schema + generation with structured output; `rib view <url>` | next |
 | 4. Validator: unknown fact references removed and logged, inferred items marked; tests that feed invented nodes | |
 
 Done when: a CLI produces a valid view spec, and invented nodes never survive validation.
@@ -51,7 +51,7 @@ Phase 2 done criterion met: both petclinic repos are classified correctly with t
 
 1. Check CI on GitHub → Actions for the latest push.
 2. `.rib/facts.sqlite` rebuilds itself when the schema changes, and `rib` re-extracts every run: no more `rm -rf .rib`.
-3. Next: Phase 3 step 2 (summaries). Before the first paid run: put `ANTHROPIC_API_KEY` in `.env` and run `.venv/bin/pytest -m llm` once (costs well under a cent) to confirm the key and the request shape.
+3. Next: Phase 3 step 3 (view spec). Before the first paid run: put `ANTHROPIC_API_KEY` in `.env`, run `.venv/bin/pytest -m llm` once (well under a cent), then `rib summarize <url> --estimate-only` on each test repo (token counting is free) to get measured cost ranges — and decide the model per level (Opus everywhere / Sonnet for class summaries / Batch API).
 
 Identity check for commits: run `git config user.email` (not `--global`) inside the repo; it must show the jayaveeragh noreply address.
 

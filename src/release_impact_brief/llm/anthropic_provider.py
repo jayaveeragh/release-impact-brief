@@ -6,13 +6,24 @@ output so the reply is guaranteed JSON, and server-side fallbacks retry a reques
 the safety classifiers decline on the model Anthropic recommends for that case.
 """
 
+import json
+from collections.abc import Sequence
 from typing import Any
 
 import anthropic
 
-from release_impact_brief.llm.base import LlmRefusal, LlmRequest, LlmResponse, LlmTruncated, Usage
+from release_impact_brief.llm.base import (
+    LlmAuthError,
+    LlmRefusal,
+    LlmRequest,
+    LlmResponse,
+    LlmTruncated,
+    Usage,
+)
 
 _FALLBACK_BETA = "server-side-fallback-2026-07-01"
+_CHUNK_CHARS = 600_000  # roughly 150-200k tokens per counting call, well under the context
+_PLAIN = LlmRequest("", ".", 1)
 
 
 class AnthropicProvider:
@@ -24,13 +35,30 @@ class AnthropicProvider:
         self.client: Any = client if client is not None else anthropic.Anthropic()
 
     @staticmethod
+    def _call(method: Any, **kwargs: Any) -> Any:
+        try:
+            return method(**kwargs)
+        except anthropic.AuthenticationError:
+            raise LlmAuthError(
+                "the API key was rejected: check ANTHROPIC_API_KEY in .env"
+            ) from None
+        except TypeError as error:  # the SDK's "Could not resolve authentication method"
+            if "authentication" not in str(error):
+                raise
+            raise LlmAuthError(
+                "no Anthropic credentials: put ANTHROPIC_API_KEY in .env (see .env.example), "
+                "or use RIB_MODEL=fake to try it without the API"
+            ) from None
+
+    @staticmethod
     def _format(request: LlmRequest) -> dict[str, Any]:
         if request.schema is None:
             return {}
         return {"format": {"type": "json_schema", "schema": request.schema}}
 
     def complete(self, request: LlmRequest) -> LlmResponse:
-        response = self.client.beta.messages.create(
+        response = self._call(
+            self.client.beta.messages.create,
             model=self.model,
             max_tokens=request.max_tokens,
             system=[
@@ -52,11 +80,37 @@ class AnthropicProvider:
                       u.cache_read_input_tokens or 0)  # fmt: skip
         return LlmResponse(text, usage, response.model)
 
-    def count_tokens(self, request: LlmRequest) -> int:
-        counted = self.client.messages.count_tokens(
+    def _count(self, system: str, prompt: str, sample: LlmRequest) -> int:
+        counted = self._call(
+            self.client.messages.count_tokens,
             model=self.model,
-            system=request.system,
-            messages=[{"role": "user", "content": request.prompt}],
-            **({"output_config": self._format(request)} if request.schema else {}),
+            system=system,
+            messages=[{"role": "user", "content": prompt}],
+            **({"output_config": self._format(sample)} if sample.schema else {}),
         )
         return int(counted.input_tokens)
+
+    def count_tokens(self, requests: Sequence[LlmRequest]) -> int:
+        """Count many requests in few calls: prompts sharing a system prompt and schema
+        are joined into one message per chunk, and the shared part (system prompt,
+        schema) is added once per extra request. Close to, not exactly, the sum of
+        separate counts (the joins add a few tokens)."""
+        groups: dict[tuple[str, str], list[LlmRequest]] = {}
+        for r in requests:
+            groups.setdefault((r.system, json.dumps(r.schema, sort_keys=True)), []).append(r)
+        total = 0
+        for (system, _), group in groups.items():
+            chunks: list[list[LlmRequest]] = [[]]
+            for r in group:
+                if (
+                    chunks[-1]
+                    and sum(len(c.prompt) for c in chunks[-1]) + len(r.prompt) > _CHUNK_CHARS
+                ):
+                    chunks.append([])
+                chunks[-1].append(r)
+            for chunk in chunks:
+                total += self._count(system, "\n\n".join(r.prompt for r in chunk), chunk[0])
+            if extra := len(group) - len(chunks):
+                shared = self._count(system, ".", group[0]) - self._count("", ".", _PLAIN)
+                total += shared * extra
+        return total

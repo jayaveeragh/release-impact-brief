@@ -2,6 +2,7 @@
 
 from release_impact_brief.llm.anthropic_provider import AnthropicProvider
 from release_impact_brief.llm.base import (
+    LlmAuthError,
     LlmError,
     LlmRefusal,
     LlmRequest,
@@ -27,6 +28,7 @@ __all__ = [
     "CostUnknown",
     "Estimate",
     "FakeProvider",
+    "LlmAuthError",
     "LlmError",
     "LlmRefusal",
     "LlmRequest",

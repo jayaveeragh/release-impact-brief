@@ -4,6 +4,7 @@ RIB_MODEL         model ID, or `fake` for the offline provider (default claude-o
 RIB_EFFORT        low | medium | high | xhigh | max (default medium)
 RIB_COST_CONTROL  on | off: estimate and cap spending before each run (default on)
 RIB_SPEND_CAP_USD cap per run in US dollars when cost control is on (default 1.0)
+RIB_CONCURRENCY   requests sent in parallel, 1-32 (default 4)
 ANTHROPIC_API_KEY read by the Anthropic SDK itself; never stored or printed here
 """
 
@@ -29,6 +30,7 @@ class Settings:
     effort: str
     cost_control: bool
     spend_cap_usd: float
+    concurrency: int = 4
 
 
 def load_settings(env: Mapping[str, str] | None = None,
@@ -59,7 +61,13 @@ def load_settings(env: Mapping[str, str] | None = None,
         raise ValueError(f"RIB_SPEND_CAP_USD must be a number, not {raw_cap!r}") from None
     if cap < 0:
         raise ValueError(f"RIB_SPEND_CAP_USD must not be negative, not {raw_cap!r}")
-    return Settings(source.get("RIB_MODEL", "claude-opus-5-5"), effort, control in _ON, cap)
+    raw_workers = source.get("RIB_CONCURRENCY", "4")
+    if not raw_workers.isdigit() or not 1 <= int(raw_workers) <= 32:
+        raise ValueError(
+            f"RIB_CONCURRENCY must be a whole number from 1 to 32, not {raw_workers!r}"
+        )
+    return Settings(source.get("RIB_MODEL", "claude-opus-5-5"), effort, control in _ON, cap,
+                    int(raw_workers))  # fmt: skip
 
 
 def make_provider(settings: Settings) -> Provider:

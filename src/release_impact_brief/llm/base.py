@@ -1,5 +1,6 @@
 """What every LLM provider takes and returns, independent of the vendor."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -31,6 +32,10 @@ class LlmError(Exception):
     pass
 
 
+class LlmAuthError(Exception):
+    """No usable credentials. Not an LlmError: it stops a run instead of failing one request."""
+
+
 class LlmRefusal(LlmError):
     """The model (and any fallback) declined the request."""
 
@@ -44,4 +49,6 @@ class Provider(Protocol):
 
     def complete(self, request: LlmRequest) -> LlmResponse: ...
 
-    def count_tokens(self, request: LlmRequest) -> int: ...
+    def count_tokens(self, requests: Sequence[LlmRequest]) -> int:
+        """Total input tokens of all `requests` (providers may batch the counting)."""
+        ...

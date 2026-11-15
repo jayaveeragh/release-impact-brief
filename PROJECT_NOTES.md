@@ -6,13 +6,14 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 
 ## Assumptions
 
-- 2026-11-12 — Summary cost estimates in the Phase 3 plan (petclinic ≈ $0.60, mall ≈ $9 with Opus 5.5) are rough: ~2k input + ~200 output tokens per class — never measured; step 2 measures them with `count_tokens` — unverified
+- 2026-11-12 — Summary cost estimates in the Phase 3 plan (petclinic ≈ $0.60, mall ≈ $9 with Opus 5.5) are rough: ~2k input + ~200 output tokens per class — never measured — partly superseded 2026-11-14: the plan assumed every class (50 / 755); only top-level main-code classes are summarised (25 / 519), so real costs should be lower. Measured cost still needs an API key (`rib summarize --estimate-only`) — unverified
 - 2026-11-12 — Cost of a response that fell back to another model is priced at the answering model's list price from the response-level usage; Anthropic's actual billing of fallbacks (per-hop usage, credit repricing) can differ slightly — approximation, active
 - 2026-11-01 — Defects4J is mostly library code (no Spring endpoints), so it can test method-level impact only; endpoint/flow impact needs real fix commits from Spring repos — from memory, not checked — unverified, confirm in Phase 8
 - 2026-11-01 — Tree-sitter has no type information, so Java call resolution is heuristic; confidence labels are what keep it honest — known limitation of syntax-only parsing — active
 
 ## Measured values
 
+- 2026-11-14 — Requests per full summary run (top-level main-code classes + modules + repo): petclinic 25 + 2, microservices 54 + 9, mall 519 + 8 — `RIB_MODEL=fake rib summarize --estimate-only` — active
 - 2026-11-11 — Unknowns answer keys (hand-written before the code, from URL/host config keys, client classes and mapping annotations): petclinic none; microservices 2 outside systems (config-server's GitHub config repo, genai's Azure OpenAI); mall 4 (MinIO, Aliyun OSS, Logstash used by 3 apps, Alipay) plus the mall-demo guess, the unclear runtime verdict and the unresolved publisher — all match (network test). Main-code call gaps: petclinic 3 unresolved / 0 guessed (= Phase 1 measurement), microservices 32 / 1, mall 105 / 1 — `rib structure` — active
 - 2026-11-11 — Connections answer keys (hand-written before the code, from client classes, gateway routes, poms and configs): microservices 4 routes + 4 HTTP requests + 8 `uses` (likely, drivers only); mall 1 request (guess) + 11 `uses` + 2 messaging; petclinic 3 `uses` — all match on the first run (`test_connections_match_hand_written_answer_key`, network). No unresolved targets in any of the 3 repos — active
 - 2026-11-10 — Structure answer keys (hand-written before the classifier, from poms, configs, compose files and main classes): petclinic single project / monolith / 1 service; microservices multi-module / microservices / 8 services with roles; mall multi-module / unclear / 4 services — all match (`test_structure_matches_hand_written_answer_key`, network) — active
@@ -34,6 +35,7 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 
 ## Trade-offs and known gaps
 
+- 2026-11-14 — Summary gaps: classes in modules without a build file are grouped as "(no build module)"; the later-level cost bound is rough (facts at ~3 chars per token plus longest possible answers); a run with module/repo failures re-asks them next time but class answers already cached are reused; source over 8,000 characters is cut, so very long classes are summarised from their facts plus the start of the code — active
 - 2026-11-12 — LLM requests are non-streaming, so max_tokens should stay around 16k or below (larger replies risk HTTP timeouts); Haiku 5.5's higher price above 100K-token prompts isn't modelled; the 1-hour cache TTL isn't used (5-minute default) — fine for summaries sent back to back — active
 - 2026-11-11 — Outside-system gaps: config-declared links back into the repo (e.g. `spring.config.import: configserver:` → config server) are not edges yet, only excluded from grey boxes; outside systems reached only from code constants or SDK clients (mall's `MinioClient.builder()` with config values, Alipay SDK) are found through their config keys, not the code; one grey box per key prefix can merge two different systems under one prefix — active
 - 2026-11-11 — Connection gaps: URLs built from constants or method calls (only literals, `@Value` placeholders and Feign names are read); client classes in shared library modules (no owning service, skipped); Spring Cloud OpenFeign URLs from config (`spring.cloud.openfeign.client.config`); gateway routes defined in Java (`RouteLocator` beans); message destinations from enums/constants (mall's publisher); cross-service messaging links; data stores configured only through custom keys (mall's `minio.endpoint`) — active
@@ -52,6 +54,8 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 
 ## Surprises
 
+- 2026-11-14 — Without credentials the Anthropic SDK constructs the client fine and only fails at the first request, with a `TypeError` ("Could not resolve authentication method"), not an `AuthenticationError` — mapped to one clear `LlmAuthError` — active
+- 2026-11-14 — The fake provider's old default answer `{}` crashed the module step (`KeyError: 'role'`) on the first free end-to-end run: answers are now checked for their required fields, and the fake follows the schema — fixed
 - 2026-11-11 — genai-service finds customers-service through `discoveryClient.getInstances("customers-service")`, not a URL; and mall-demo's target is only `${host.mall.admin}` = `http://localhost:8080` — both found while hand-writing the answer key; they set the "bare service name" and "port match = guess" rules — active
 - 2026-11-11 — An old `.rib/facts.sqlite` rejected the new edge kinds (its CHECK constraint lists the old ones) — the same stale-state problem as the old cache; fixed by rebuilding on schema change — fixed
 - 2026-11-10 — petclinic has a `@SpringBootApplication` inside a test class (CrashControllerIntegrationTests) and the microservices genai-service depends on the gateway library without being a gateway — both would have produced wrong services/roles with the obvious rule; found while hand-writing the answer keys — active

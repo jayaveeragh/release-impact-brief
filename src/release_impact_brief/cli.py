@@ -6,9 +6,20 @@ from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
+from release_impact_brief.adapters import Extraction
 from release_impact_brief.facts import EdgeKind, FactStore, NodeKind
-from release_impact_brief.fetch import FetchError, fetch_repo
+from release_impact_brief.fetch import FetchError, FetchResult, fetch_repo
+from release_impact_brief.llm import (
+    CostUnknown,
+    LlmAuthError,
+    LlmSession,
+    Settings,
+    SpendingCapExceeded,
+    load_settings,
+    make_provider,
+)
 from release_impact_brief.pipeline import analyze
+from release_impact_brief.summaries import Summarizer, SummaryCache
 from release_impact_brief.system import classify, unclear_items
 
 
@@ -32,6 +43,11 @@ def _load(args: argparse.Namespace) -> tuple[FactStore, int]:
     # would serve stale facts after the extractor changes. Only LLM output gets cached.
     with fetch_repo(args.url, args.ref) as fetched:
         extraction = analyze(fetched.path, fetched.skipped_large)
+    return _store(args, fetched, extraction)
+
+
+def _store(args: argparse.Namespace, fetched: FetchResult,
+           extraction: Extraction) -> tuple[FactStore, int]:  # fmt: skip
     args.db.parent.mkdir(parents=True, exist_ok=True)
     store = FactStore(args.db)
     snap = store.snapshot(fetched.repo.url, fetched.commit_sha)
@@ -108,6 +124,64 @@ def _structure(args: argparse.Namespace) -> int:
     return 0
 
 
+def _summarize(args: argparse.Namespace) -> int:
+    try:
+        settings = load_settings()
+    except ValueError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    session = LlmSession(make_provider(settings), settings)
+    with fetch_repo(args.url, args.ref) as fetched:
+        extraction = analyze(fetched.path, fetched.skipped_large)
+        store, _ = _store(args, fetched, extraction)
+        store.close()
+        cache = SummaryCache(args.db)
+        # Reads class sources, so it is built while the clone still exists.
+        summarizer = Summarizer(extraction, fetched.path, fetched.repo.url, fetched.commit_sha,
+                                session, cache)  # fmt: skip
+    try:
+        return _run_summaries(args, settings, session, summarizer)
+    except (LlmAuthError, SpendingCapExceeded, CostUnknown) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    finally:
+        cache.close()
+
+
+def _run_summaries(args: argparse.Namespace, settings: Settings, session: LlmSession,
+                   summarizer: Summarizer) -> int:  # fmt: skip
+    plan = summarizer.plan()
+    print(f"\nmodel:       {settings.model} (effort {settings.effort}, "
+          f"{settings.concurrency} at a time)")  # fmt: skip
+    print(f"to ask:      {plan.class_requests} class summaries ({plan.class_cached} cached), "
+          f"then up to {plan.later_requests} module/repo summaries")  # fmt: skip
+    if settings.cost_control:
+        low, high = plan.min_usd or 0, plan.max_usd or 0
+        print(f"cost:        at least ${low:.2f}, at most ${high:.2f} (worst case: every "
+              f"answer at full length); cap ${settings.spend_cap_usd:.2f}")  # fmt: skip
+    else:
+        print("cost:        cost control is off: no estimate, no cap")
+    if args.estimate_only:
+        return 0
+    ask = settings.cost_control and plan.class_requests and not args.yes
+    if ask and input("Proceed? [y/N] ").strip().lower() not in ("y", "yes"):
+        print("Stopped; nothing was spent.")
+        return 1
+    result = summarizer.run()
+    failed = [s for level in (result.classes, result.modules) for s in level.values() if s.error]
+    if result.repo is not None and result.repo.data is not None:
+        print(f"\n{result.repo.data['summary']}\n\n{result.repo.data['organization']}")
+    print("\nmodules:")
+    for m in result.modules.values():
+        print(f"  {m.name}: {m.data['summary'] if m.data else '(failed: ' + str(m.error) + ')'}")
+    for s in failed:
+        print(f"  ! {s.level} {s.name}: {s.error}")
+    unpriced = f", {session.unpriced_calls} answers from a model without a price" \
+        if session.unpriced_calls else ""  # fmt: skip
+    print(f"\nspent:       ${session.spent_usd:.4f}{unpriced}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="rib", description="release-impact-brief")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -134,6 +208,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     structure.add_argument("--ref", help="branch, tag or full commit SHA (default: HEAD)")
     structure.add_argument("--db", type=Path, default=Path(".rib/facts.sqlite"), help="fact store")
     structure.set_defaults(func=_structure)
+
+    summarize = sub.add_parser(
+        "summarize", help="summarise the repo with the LLM (class, module, repo); cached"
+    )
+    summarize.add_argument("url", help="https://github.com/<owner>/<repo>")
+    summarize.add_argument("--ref", help="branch, tag or full commit SHA (default: HEAD)")
+    summarize.add_argument("--db", type=Path, default=Path(".rib/facts.sqlite"), help="fact store")
+    summarize.add_argument("--yes", action="store_true", help="don't ask before spending")
+    summarize.add_argument("--estimate-only", action="store_true",
+                           help="print the plan and cost estimate, then stop")  # fmt: skip
+    summarize.set_defaults(func=_summarize)
 
     args = parser.parse_args(argv)
     try:

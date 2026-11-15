@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, factId, sourceUrl, type FactInfo, type Section, type Verdict, type View } from "./api";
+import { api, factId, routes, sourceUrl, type FactInfo, type Section, type Verdict, type View } from "./api";
 import { Diagram } from "./Diagram";
 import { Panels } from "./Panels";
 
@@ -41,10 +41,10 @@ export function ViewPage({ name }: { name: string }) {
               <Diagram section={diagram} facts={view.facts} onSelect={setSelected} />
             </>
           ) : <p className="muted">No architecture diagram in this view.</p>}
-          <Panels view={view} onSelect={setSelected} link={link} />
+          <Panels name={name} view={view} onSelect={setSelected} link={link} />
         </div>
         <aside className="side-col">
-          <FactDetail id={selected} view={view} link={link} />
+          <FactDetail id={selected} name={name} view={view} link={link} />
           {view.removed.length > 0 && (
             <details className="removed">
               <summary>{view.removed.length} reference{view.removed.length > 1 ? "s" : ""} removed
@@ -72,8 +72,8 @@ function VerdictBadge({ label, verdict, link }: {
   );
 }
 
-function FactDetail({ id, view, link }: {
-  id: string | null; view: View; link: (f: string, l?: number | null) => string;
+function FactDetail({ id, name, view, link }: {
+  id: string | null; name: string; view: View; link: (f: string, l?: number | null) => string;
 }) {
   if (!id) return <p className="muted hint">Click a box, link or citation to see where it comes from.</p>;
   const fact: FactInfo | undefined = view.facts[id];
@@ -93,6 +93,12 @@ function FactDetail({ id, view, link }: {
         </>
       ) : <p><code>{id}</code></p>}
       {flows.length > 0 && <p className="muted">In flows: {flows.map((f) => f.title).join(", ")}</p>}
+      {fact?.kind === "endpoint" && <p><a href={routes.endpoint(name, id)}>Open its branch map →</a></p>}
+      {fact?.kind === "module" && <p><a href={routes.module(name, id)}>Open the module →</a></p>}
+      {fact?.kind === "service" && (() => {
+        const module = view.panels.services.find((s) => s.id === id)?.module;
+        return module ? <p><a href={routes.module(name, module)}>Open its module →</a></p> : null;
+      })()}
     </section>
   );
 }

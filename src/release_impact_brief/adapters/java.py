@@ -16,6 +16,7 @@ from tree_sitter import Node as TsNode
 
 from release_impact_brief.adapters import Extraction
 from release_impact_brief.adapters.java_calls import CallSite, JavaResolver
+from release_impact_brief.adapters.java_flow import extract_flow
 from release_impact_brief.adapters.java_jpa import add_entities
 from release_impact_brief.adapters.java_spring import add_endpoints
 from release_impact_brief.facts import Confidence, Edge, EdgeKind, Node, NodeKind
@@ -316,6 +317,11 @@ class _FileExtractor:
         body = decl.child_by_field_name("body")
         if body is not None:
             self._body(body, method_id, class_id)
+            # Branch structure, for request handlers and methods that branch (the rest
+            # - mostly getters and setters - would only add bulk).
+            flow = extract_flow(body)
+            if flow["branches"] or any(a.endswith("Mapping") for a in annotations):
+                attributes["flow"] = flow
 
     def _body(self, body: TsNode, method_id: str, class_id: str) -> None:
         """Record call sites and local variable types inside a method body."""

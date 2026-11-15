@@ -210,5 +210,193 @@
     "written": "2026-11-11, by reading the non-test application*.yml/properties (URL/host/endpoint keys), client classes and mapping annotations by hand, before the tool could list them",
     "external_systems": [],
     "unclear_items": []
+  },
+  "branches": {
+    "written": "2026-11-16, by reading OwnerController, PetController, Owner, Person, Pet, NamedEntity at this commit by hand, before the tool could extract branches",
+    "notes": "drivers = request inputs a branch condition depends on, directly or through local variables, query results and BindingResult rejections; 'validation:X' = the @Valid object's constraint check, whose fields are those with validation annotations; exits = every return/throw inside the branch's body, at any depth",
+    "endpoints": [
+      {
+        "endpoint": "POST /owners/new",
+        "handler": "owner.OwnerController#processCreationForm",
+        "branches": [
+          {
+            "line": 79,
+            "kind": "if",
+            "drivers": [
+              "validation:owner"
+            ],
+            "exits_when_true": [
+              81
+            ]
+          }
+        ],
+        "returns": [
+          81,
+          86
+        ],
+        "throws": [],
+        "validation": {
+          "owner": [
+            "firstName",
+            "lastName",
+            "address",
+            "city",
+            "telephone"
+          ]
+        },
+        "inputs": {
+          "owner.firstName": "drives",
+          "owner.lastName": "drives",
+          "owner.address": "drives",
+          "owner.city": "drives",
+          "owner.telephone": "drives"
+        }
+      },
+      {
+        "endpoint": "GET /owners",
+        "handler": "owner.OwnerController#processFindForm",
+        "branches": [
+          {
+            "line": 99,
+            "kind": "if",
+            "drivers": [
+              "owner.lastName"
+            ],
+            "exits_when_true": []
+          },
+          {
+            "line": 108,
+            "kind": "if",
+            "drivers": [
+              "owner.lastName",
+              "page"
+            ],
+            "exits_when_true": [
+              113
+            ]
+          },
+          {
+            "line": 110,
+            "kind": "if",
+            "drivers": [
+              "owner.lastName"
+            ],
+            "exits_when_true": []
+          },
+          {
+            "line": 116,
+            "kind": "if",
+            "drivers": [
+              "owner.lastName",
+              "page"
+            ],
+            "exits_when_true": [
+              119
+            ]
+          },
+          {
+            "line": 122,
+            "kind": "if",
+            "drivers": [
+              "owner.lastName",
+              "page"
+            ],
+            "exits_when_true": [
+              125
+            ]
+          }
+        ],
+        "returns": [
+          113,
+          119,
+          125,
+          129
+        ],
+        "throws": [],
+        "validation": {},
+        "inputs": {
+          "page": "drives",
+          "owner.lastName": "drives",
+          "owner.firstName": "unused",
+          "owner.address": "unused",
+          "owner.city": "unused",
+          "owner.telephone": "unused"
+        }
+      },
+      {
+        "endpoint": "POST /owners/{ownerId}/pets/new",
+        "handler": "owner.PetController#processCreationForm",
+        "branches": [
+          {
+            "line": 111,
+            "kind": "if",
+            "drivers": [
+              "owner",
+              "pet.isNew()",
+              "pet.name"
+            ],
+            "exits_when_true": []
+          },
+          {
+            "line": 116,
+            "kind": "if",
+            "drivers": [
+              "pet.birthDate"
+            ],
+            "exits_when_true": []
+          },
+          {
+            "line": 120,
+            "kind": "if",
+            "drivers": [
+              "owner",
+              "pet.birthDate",
+              "pet.isNew()",
+              "pet.name",
+              "validation:pet"
+            ],
+            "exits_when_true": [
+              121
+            ]
+          },
+          {
+            "line": 128,
+            "kind": "catch",
+            "drivers": [],
+            "exits_when_true": [
+              130,
+              133
+            ]
+          },
+          {
+            "line": 129,
+            "kind": "if",
+            "drivers": [],
+            "exits_when_true": [
+              130
+            ]
+          }
+        ],
+        "returns": [
+          121,
+          133,
+          136
+        ],
+        "throws": [
+          130
+        ],
+        "validation": {
+          "pet": [
+            "name"
+          ]
+        },
+        "custom_validator": "PetValidator (set in initPetBinder; its own checks are not traced)",
+        "inputs": {
+          "owner": "drives",
+          "pet.name": "drives",
+          "pet.birthDate": "drives"
+        }
+      }
+    ]
   }
 }

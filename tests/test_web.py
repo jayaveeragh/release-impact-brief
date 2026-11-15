@@ -122,3 +122,44 @@ def test_view_names_cannot_escape_the_views_folder(tmp_path: Path, repo: Path) -
     for name in ("..__secret@000000000000", "../secret", "acme__shop@zzz"):
         assert c.get(f"/api/views/{name}").status_code == 404
     assert c.get("/api/analyses/nope").status_code == 404
+
+
+def analysed(tmp_path: Path, repo: Path, **kwargs: Any) -> tuple[TestClient, str]:
+    c = client(tmp_path, repo, **kwargs)
+    job = c.post("/api/analyses", json={"url": "https://github.com/acme/shop"}).json()
+    done = wait(c, job["id"], {"done", "failed"})
+    assert done["status"] == "done", done
+    return c, str(done["view"])
+
+
+def test_branch_map_is_computed_on_demand(tmp_path: Path, repo: Path) -> None:
+    c, view = analysed(tmp_path, repo)
+    result = c.get(f"/api/views/{view}/branches", params={"endpoint": "java:endpoint:GET /hello"})
+    assert result.status_code == 200
+    body = result.json()
+    assert body["handler"] == "shop.Hello#hello()" and body["returns"] == [6]
+    missing = c.get(f"/api/views/{view}/branches", params={"endpoint": "java:endpoint:GET /x"})
+    assert missing.status_code == 404
+
+
+def test_module_flows_on_demand(tmp_path: Path, repo: Path) -> None:
+    c, view = analysed(tmp_path, repo)
+    result = c.post(f"/api/views/{view}/flows", json={"module": "build:module:."})
+    assert result.status_code == 200, result.text
+    body = result.json()
+    assert body["module"] == "build:module:." and body["flows"] == []  # fake model: no flows
+    assert (
+        c.post(f"/api/views/{view}/flows", json={"module": "build:module:nope"}).status_code == 404
+    )
+
+
+def test_paid_module_flows_ask_first(tmp_path: Path, repo: Path) -> None:
+    provider = FakeProvider(model="claude-opus-5-5")
+    c, view = analysed(tmp_path, repo)  # analysed for free first
+    c.app.state.runner._provider = lambda s: provider  # type: ignore[attr-defined]
+    c.app.state.runner._settings = lambda: Settings("claude-opus-5-5", "medium", True, 1.0, 1)  # type: ignore[attr-defined]
+    first = c.post(f"/api/views/{view}/flows", json={"module": "build:module:."}).json()
+    assert first["needs_confirmation"] is True and first["estimate"]["max_usd"] > 0
+    assert provider.calls == []
+    second = c.post(f"/api/views/{view}/flows", json={"module": "build:module:.", "confirm": True})
+    assert second.status_code == 200 and "flows" in second.json() and len(provider.calls) == 1

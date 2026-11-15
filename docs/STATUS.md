@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-11-16
+Last updated: 2026-11-17
 
 ## Where we are
 
@@ -29,8 +29,8 @@ Phase 1 done criterion met: `rib facts` on spring-petclinic @ `500158f` matches 
 |---|---|
 | 1. Provider interface (Anthropic SDK + offline fake), settings from `.env`, cost tracking, spending cap; cost control can be switched off | done (cf194ff; offline tests; live test not run yet) |
 | 2. Bottom-up summaries (class → module → repo) from facts + source, repo content fenced as untrusted data, cached by exact request; `rib summarize` | done (1620830; offline tests; not yet run against the real API) |
-| 3. View spec schema + generation with structured output; `rib view <url>` | done (next commit) |
-| 4. Validator: unknown fact references removed and logged, inferred items marked; tests that feed invented nodes | done (next commit) |
+| 3. View spec schema + generation with structured output; `rib view <url>` | done (5d4c3e5) |
+| 4. Validator: unknown fact references removed and logged, inferred items marked; tests that feed invented nodes | done (5d4c3e5) |
 
 Phase 3 done criterion met on the fake provider: `rib view` writes a valid view spec, and `test_generated_view_holds_only_real_facts` feeds invented nodes and links that never survive. First real run done 2026-11-15 with the free local model (`ollama:qwen3:14b`) on spring-petclinic: valid, sensible view in ~4 min (see PROJECT_NOTES). The microservices repo hasn't been run with a real model yet.
 
@@ -38,14 +38,25 @@ Phase 3 done criterion met on the fake provider: `rib view` writes a valid view 
 
 | Step | State |
 |---|---|
-| 1. FastAPI backend: background analyses (one at a time) with stages and progress, cost confirmation for paid models, saved views; `rib serve` (127.0.0.1 only) | done (next commit) |
-| 2. Frontend: React 19 + TypeScript + Vite, React Flow + ELK | done (next commit) |
-| 3. Architecture diagram: nested groups, links styled by confidence, dashed outside/inferred, click for source | done (next commit) |
-| 4. Panels: services, endpoints, data model, stores & outside systems, narrative with citations, flows, unclear items; GitHub links at the analysed commit | done (next commit) |
+| 1. FastAPI backend: background analyses (one at a time) with stages and progress, cost confirmation for paid models, saved views; `rib serve` (127.0.0.1 only) | done (5d4c3e5) |
+| 2. Frontend: React 19 + TypeScript + Vite, React Flow + ELK | done (5d4c3e5) |
+| 3. Architecture diagram: nested groups, links styled by confidence, dashed outside/inferred, click for source | done (5d4c3e5) |
+| 4. Panels: services, endpoints, data model, stores & outside systems, narrative with citations, flows, unclear items; GitHub links at the analysed commit | done (5d4c3e5) |
 
-Done when: the owner reviews the overview for both petclinic repos in the browser and would demo it — **waiting for the owner's review**.
+Done: reviewed and committed by the owner (5d4c3e5).
 
-## Phases 5–6: plans approved 2026-11-15 (see DECISIONS); commits per phase
+## Phase 5: Drill-down and branch map (plan approved 2026-11-15)
+
+| Step | State |
+|---|---|
+| 0. GitNexus check (brief): its current docs describe opt-in per-function CFG / control dependence / def-use for all its languages, Java included — recorded in DECISIONS | done |
+| 1. Module view (Level 2): summary, classes with summaries, endpoints, entities, dependencies; LLM-chosen flows on request, validated | done (next commit) |
+| 2. Java branch extraction: if / switch (cases) / ternary / catch with conditions, reads, exits, nesting; locals, calls, rejectValue | done (next commit) |
+| 3. Parameter table + branch map per endpoint, computed on click; matrix of inputs × branches; drives / read as a whole / passed through / unused | done (next commit) |
+
+Phase 5 done criterion met: the branch maps for three hand-checked petclinic endpoints (POST /owners/new, GET /owners, POST /owners/{ownerId}/pets/new) match the hand-written answer key — branch lines, kinds, drivers, exits, returns, throws, validation fields, the custom validator and input roles (`test_petclinic_branch_maps_match_hand_written_answer_key`).
+
+## Phase 6: plan approved 2026-11-15 (see DECISIONS); commit per phase
 
 ## Phase 2: System structure (done)
 
@@ -64,7 +75,7 @@ Phase 2 done criterion met: both petclinic repos are classified correctly with t
 
 1. Check CI on GitHub → Actions for the latest push.
 2. `.rib/facts.sqlite` rebuilds itself when the schema changes, and `rib` re-extracts every run: no more `rm -rf .rib`.
-3. Next: owner reviews Phase 4 in the browser (`rib serve`, open both petclinic views); then Phase 5 starts with the GitNexus README check. Ollama must be running (`brew services start ollama`).
+3. Next: owner reviews Phase 5 in the browser (endpoint pages and module pages), commits, then Phase 6 (chat with citations) — hand-write ~10 petclinic questions with the code locations a good answer must cite before building it.
 
 Identity check for commits: run `git config user.email` (not `--global`) inside the repo; it must show the jayaveeragh noreply address.
 

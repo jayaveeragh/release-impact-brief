@@ -160,6 +160,7 @@ class Summary:
     data: dict[str, Any] | None = None
     error: str | None = None
     cached: bool = False
+    module: str | None = None  # for classes: the module that holds them
 
 
 @dataclass
@@ -355,6 +356,8 @@ class Summarizer:
                 todo.append(u)
         for u, outcome in zip(todo, self.session.run_all([u.request for u in todo]), strict=True):
             results[u.id] = self._record(u, outcome)
+        for u in units:
+            results[u.id].module = u.module
         return {u.id: results[u.id] for u in units}
 
     def _record(self, unit: Unit, outcome: LlmResponse | LlmError) -> Summary:

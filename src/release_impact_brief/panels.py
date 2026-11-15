@@ -40,6 +40,14 @@ def build_panels(facts: Extraction, summaries: SummaryResult) -> dict[str, Any]:
                 if e.dst == target and e.src.startswith("service:")]  # fmt: skip
 
     module_summary = {k: v.data for k, v in summaries.modules.items() if v.data is not None}
+    classes_of: dict[str, list[dict[str, Any]]] = {}
+    for c in summaries.classes.values():
+        node = nodes.get(c.unit_id)
+        classes_of.setdefault(c.module or "", []).append({
+            "id": c.unit_id, "name": c.name, "role": (c.data or {}).get("role"),
+            "summary": (c.data or {}).get("summary"), "error": c.error,
+            "file": node.file if node else None,
+            "line": node.start_line if node else None})  # fmt: skip
     relations: dict[str, list[dict[str, Any]]] = {}
     repositories: dict[str, list[str]] = {}
     entity_of_class = {e.src: e.dst for e in facts.edges if e.kind == EdgeKind.MAPS}
@@ -66,13 +74,20 @@ def build_panels(facts: Extraction, summaries: SummaryResult) -> dict[str, Any]:
             "id": m.id, "name": m.name, "build_tools": m.attributes["build_tools"],
             "summary": (module_summary.get(m.id) or {}).get("summary"),
             "capabilities": (module_summary.get(m.id) or {}).get("capabilities", []),
+            "classes": classes_of.get(m.id, []),
+            "depends_on": sorted(e.dst for e in facts.edges
+                                 if e.kind == EdgeKind.DEPENDS_ON and e.src == m.id),
+            "service": service.id if (service := service_of_module.get(m.id)) else None,
             **_where(m)} for m in modules],
         "endpoints": [{
             "id": n.id, "method": n.attributes["http_method"], "path": n.attributes["path"],
             "path_resolved": n.attributes["path_resolved"],
             "handler": _short(n.attributes["handler"]), "service": service_for(n.file),
             "inputs": n.attributes["inputs"], "returns": n.attributes["returns"],
-            "response": n.attributes["response"], **_where(n)}
+            "response": n.attributes["response"],
+            "branches": len((nodes[n.attributes["handler"]].attributes.get("flow") or {})
+                            .get("branches", [])),
+            **_where(n)}
             for n in by_kind.get(NodeKind.ENDPOINT, [])],
         "entities": [{
             "id": n.id, "table": n.name, "class": _short(n.attributes["class"]),

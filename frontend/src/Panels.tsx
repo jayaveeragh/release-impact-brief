@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { factId, type View } from "./api";
+import { factId, routes, type View } from "./api";
 
 type Link = (file: string, line?: number | null) => string;
-type Props = { view: View; onSelect: (id: string) => void; link: Link };
+type Props = { name: string; view: View; onSelect: (id: string) => void; link: Link };
 
-const TABS = ["Overview", "Services", "Endpoints", "Data model", "Stores & outside", "Unclear"] as const;
+const TABS = ["Overview", "Services", "Modules", "Endpoints", "Data model", "Stores & outside",
+  "Unclear"] as const;
 
 export function Panels(props: Props) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Overview");
   const counts: Partial<Record<(typeof TABS)[number], number>> = {
     Services: props.view.panels.services.length,
+    Modules: props.view.panels.modules.length,
     Endpoints: props.view.panels.endpoints.length,
     "Data model": props.view.panels.entities.length,
     "Stores & outside": props.view.panels.data_stores.length + props.view.panels.external_systems.length,
@@ -28,6 +30,7 @@ export function Panels(props: Props) {
       <div role="tabpanel">
         {tab === "Overview" && <Overview {...props} />}
         {tab === "Services" && <Services {...props} />}
+        {tab === "Modules" && <Modules {...props} />}
         {tab === "Endpoints" && <Endpoints {...props} />}
         {tab === "Data model" && <DataModel {...props} />}
         {tab === "Stores & outside" && <Stores {...props} />}
@@ -83,7 +86,22 @@ function Overview({ view, onSelect }: Props) {
   );
 }
 
-function Services({ view, link }: Props) {
+function Modules({ name, view }: Props) {
+  return (
+    <div className="cards">
+      {view.panels.modules.map((m) => (
+        <article key={m.id} className="card">
+          <h3><a href={routes.module(name, m.id)}>{m.name}</a></h3>
+          <p className="muted">{m.classes.length} classes · {m.build_tools.join(", ")}
+            {m.service && " · runs as an app"}</p>
+          {m.summary && <p>{m.summary}</p>}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function Services({ name, view, link }: Props) {
   const modules = new Map(view.panels.modules.map((m) => [m.id, m]));
   return (
     <div className="cards">
@@ -91,7 +109,7 @@ function Services({ view, link }: Props) {
         const module = s.module ? modules.get(s.module) : undefined;
         return (
           <article key={s.id} className="card">
-            <h3>{s.name}</h3>
+            <h3>{s.module ? <a href={routes.module(name, s.module)}>{s.name}</a> : s.name}</h3>
             <p className="muted">port {s.port ?? "not set"}{s.roles.length > 0 && <> · {s.roles.join(", ")}</>}</p>
             {s.summary && <p>{s.summary}</p>}
             {module && module.capabilities.length > 0 && (
@@ -105,15 +123,16 @@ function Services({ view, link }: Props) {
   );
 }
 
-function Endpoints({ view, link }: Props) {
+function Endpoints({ name, view, link }: Props) {
   const service = new Map(view.panels.services.map((s) => [s.id, s.name]));
   return (
     <div className="table-wrap"><table className="table">
-      <thead><tr><th>Method</th><th>Path</th><th>Inputs</th><th>Returns</th><th>Service</th><th>Handler</th></tr></thead>
+      <thead><tr><th>Method</th><th>Path</th><th>Branches</th><th>Inputs</th><th>Returns</th><th>Service</th><th>Handler</th></tr></thead>
       <tbody>{view.panels.endpoints.map((e) => (
         <tr key={e.id}>
           <td><span className={`method m-${e.method}`}>{e.method}</span></td>
-          <td><code>{e.path}</code>{!e.path_resolved && <span className="tag guess">path from a constant</span>}</td>
+          <td><a href={routes.endpoint(name, e.id)}><code>{e.path}</code></a>{!e.path_resolved && <span className="tag guess">path from a constant</span>}</td>
+          <td><a href={routes.endpoint(name, e.id)}>{e.branches > 0 ? `${e.branches} →` : "map →"}</a></td>
           <td>{e.inputs.map((input, i) => (
             <span key={i} className="input" title={input.implicit ? "bound implicitly by Spring" : ""}>
               {input.name}<small> {input.source}{input.validated ? " ✓valid" : ""}</small></span>))}</td>

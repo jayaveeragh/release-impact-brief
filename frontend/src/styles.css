@@ -112,3 +112,30 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0
 .input small { color: var(--muted); }
 .unclear { list-style: none; padding: 0; }
 .unclear li { padding: 0.5rem 0; border-bottom: 1px solid var(--line); }
+
+.crumbs { margin: 0 0 0.5rem; font-size: 0.9em; }
+.note-box { background: #fffaf0; border: 1px solid #f0dfb8; border-radius: 10px; padding: 0.4rem 0.9rem; margin: 1rem 0; }
+.matrix { border-collapse: collapse; background: var(--panel); font-size: 0.85em; }
+.matrix th, .matrix td { border: 1px solid var(--line); padding: 0.3rem 0.5rem; text-align: center; }
+.matrix th:first-child, .matrix td:first-child, .matrix th:nth-child(2), .matrix td:nth-child(2) { text-align: left; }
+.matrix .cell { color: var(--accent); font-size: 1.1em; }
+.matrix tr.role-unused td { color: var(--muted); }
+.role { font-size: 0.75rem; font-weight: 600; border-radius: 999px; padding: 0.05rem 0.5rem; white-space: nowrap; }
+.role-drives { background: #e6eefc; color: var(--accent); }
+.role-passed-through { background: #ececea; color: var(--ink); }
+.role-read-as-a-whole { background: #fff1db; color: var(--guess); }
+.role-unused { background: transparent; color: var(--muted); border: 1px dashed var(--line); }
+.branches { list-style: none; padding: 0; }
+.branch { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px; padding: 0.5rem 0.75rem; margin-bottom: 0.5rem; }
+.branch.kind-catch { border-left-color: var(--error); }
+.branch.kind-switch { border-left-color: var(--guess); }
+.branch-head code { font-size: 0.9em; }
+.branch-body { margin-top: 0.3rem; font-size: 0.92em; }
+.driver { display: inline-block; background: #e6eefc; color: var(--accent); border-radius: 4px; padding: 0 0.35rem; margin: 0 0.25rem 0.2rem 0; font-family: ui-monospace, Menlo, monospace; font-size: 0.85em; }
+.exit { margin-right: 0.6rem; }
+.cases { margin: 0.3rem 0 0; padding-left: 1.1rem; }
+.plain { list-style: none; padding: 0; }
+.plain li { padding: 0.3rem 0; border-bottom: 1px solid var(--line); }
+.primary, .confirm button { padding: 0.55rem 1rem; border: 0; border-radius: 8px; background: var(--accent); color: white; font-weight: 600; }
+.primary:disabled { opacity: 0.6; }
+h2 .count { font-size: 0.6em; vertical-align: middle; }

@@ -120,7 +120,7 @@ def _base_type(type_text: str) -> str:
     return type_text.split("<", 1)[0].removesuffix("...")
 
 
-def _input(param: dict[str, Any]) -> dict[str, Any] | None:
+def describe_input(param: dict[str, Any]) -> dict[str, Any] | None:
     """Describe where a handler parameter comes from; None for framework-supplied ones."""
     annotations = set(param["annotations"])
     args = param.get("annotation_args", {})
@@ -182,7 +182,7 @@ def add_endpoints(out: Extraction) -> None:
                             or "ResponseBody" in attrs["annotations"]
                             or _base_type(returns) in ("ResponseEntity", "Mono", "Flux")
                         )
-                        inputs = [i for p in attrs["parameters"] if (i := _input(p))]
+                        inputs = [i for p in attrs["parameters"] if (i := describe_input(p))]
                         conf = Confidence.EXACT if literal and prefix_literal else Confidence.GUESS
                         out.nodes.append(
                             Node(

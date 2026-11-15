@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from release_impact_brief.adapters import Extraction
 from release_impact_brief.facts import FactStore
 from release_impact_brief.fetch import FetchError, FetchResult, fetch_repo, parse_github_url
 from release_impact_brief.llm import (
@@ -71,6 +72,7 @@ class JobRunner:
         self.views_dir = db.parent / "views"
         self._fetch, self._settings, self._provider = fetch, settings, provider
         self._jobs: dict[str, Job] = {}
+        self._facts: dict[tuple[str, str], Extraction] = {}
         self._pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="analysis")
 
     def start(self, url: str, ref: str | None) -> Job:
@@ -79,6 +81,26 @@ class JobRunner:
         self._jobs[job.id] = job
         self._pool.submit(self._run, job)
         return job
+
+    def session(self) -> LlmSession:
+        settings = self._settings()
+        return LlmSession(self._provider(settings), settings)
+
+    def facts(self, repo: str, sha: str) -> Extraction | None:
+        """Stored facts for repo@sha (kept in memory after the first load)."""
+        if (repo, sha) not in self._facts:
+            if not self.db.is_file():
+                return None
+            store = FactStore(self.db)
+            try:
+                snapshot = store.snapshot(repo, sha)
+                found = Extraction(store.nodes(snapshot), store.edges(snapshot))
+            finally:
+                store.close()
+            if not found.nodes:
+                return None
+            self._facts[(repo, sha)] = found
+        return self._facts[(repo, sha)]
 
     def get(self, job_id: str) -> Job | None:
         return self._jobs.get(job_id)
@@ -108,6 +130,7 @@ class JobRunner:
                                         facts.nodes, facts.edges)  # fmt: skip
                 finally:
                     store.close()
+                self._facts.pop((fetched.repo.url, fetched.commit_sha), None)
                 cache = SummaryCache(self.db)
                 summarizer = Summarizer(facts, fetched.path, fetched.repo.url,
                                         fetched.commit_sha, session, cache)  # fmt: skip

@@ -1,6 +1,7 @@
 """Command-line entry point: `rib`."""
 
 import argparse
+import json
 import sys
 from collections import Counter
 from collections.abc import Sequence
@@ -12,6 +13,7 @@ from release_impact_brief.fetch import FetchError, FetchResult, fetch_repo
 from release_impact_brief.llm import (
     CostUnknown,
     LlmAuthError,
+    LlmError,
     LlmSession,
     Settings,
     SpendingCapExceeded,
@@ -19,8 +21,9 @@ from release_impact_brief.llm import (
     make_provider,
 )
 from release_impact_brief.pipeline import analyze
-from release_impact_brief.summaries import Summarizer, SummaryCache
+from release_impact_brief.summaries import Summarizer, SummaryCache, SummaryResult
 from release_impact_brief.system import classify, unclear_items
+from release_impact_brief.views import generate_view
 
 
 def _fetch(args: argparse.Namespace) -> int:
@@ -141,7 +144,7 @@ def _summarize(args: argparse.Namespace) -> int:
                                 session, cache)  # fmt: skip
     try:
         return _run_summaries(args, settings, session, summarizer)
-    except (LlmAuthError, SpendingCapExceeded, CostUnknown) as error:
+    except (LlmAuthError, LlmError, SpendingCapExceeded, CostUnknown) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
     finally:
@@ -153,8 +156,9 @@ def _run_summaries(args: argparse.Namespace, settings: Settings, session: LlmSes
     plan = summarizer.plan()
     print(f"\nmodel:       {settings.model} (effort {settings.effort}, "
           f"{settings.concurrency} at a time)")  # fmt: skip
+    view = " + 1 view spec" if args.view else ""
     print(f"to ask:      {plan.class_requests} class summaries ({plan.class_cached} cached), "
-          f"then up to {plan.later_requests} module/repo summaries")  # fmt: skip
+          f"then up to {plan.later_requests} module/repo summaries{view}")  # fmt: skip
     if settings.cost_control:
         low, high = plan.min_usd or 0, plan.max_usd or 0
         print(f"cost:        at least ${low:.2f}, at most ${high:.2f} (worst case: every "
@@ -178,8 +182,26 @@ def _run_summaries(args: argparse.Namespace, settings: Settings, session: LlmSes
         print(f"  ! {s.level} {s.name}: {s.error}")
     unpriced = f", {session.unpriced_calls} answers from a model without a price" \
         if session.unpriced_calls else ""  # fmt: skip
+    if args.view:
+        _write_view(args, summarizer, result, session)
     print(f"\nspent:       ${session.spent_usd:.4f}{unpriced}")
     return 0
+
+
+def _write_view(args: argparse.Namespace, summarizer: Summarizer, result: SummaryResult,
+                session: LlmSession) -> None:  # fmt: skip
+    view = generate_view(summarizer.facts, result, summarizer.repo, summarizer.sha, session,
+                         summarizer.cache)  # fmt: skip
+    owner, name = summarizer.repo.rstrip("/").split("/")[-2:]
+    path = args.db.parent / "views" / f"{owner}__{name}@{summarizer.sha[:12]}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(view, indent=2))
+    kinds = Counter(s["type"] for s in view["sections"])
+    print(f"\nview spec:   {path}")
+    print("sections:    " + (", ".join(f"{k} {v}" for k, v in sorted(kinds.items())) or "none"))
+    print(f"removed:     {len(view['removed'])} references that matched no fact")
+    for r in view["removed"][:10]:
+        print(f"  - {r['where']}: {r['ref']} ({r['reason']})")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -218,7 +240,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     summarize.add_argument("--yes", action="store_true", help="don't ask before spending")
     summarize.add_argument("--estimate-only", action="store_true",
                            help="print the plan and cost estimate, then stop")  # fmt: skip
-    summarize.set_defaults(func=_summarize)
+    summarize.set_defaults(func=_summarize, view=False)
+
+    view = sub.add_parser(
+        "view", help="summarise, then build the validated view spec (JSON) for the web app"
+    )
+    view.add_argument("url", help="https://github.com/<owner>/<repo>")
+    view.add_argument("--ref", help="branch, tag or full commit SHA (default: HEAD)")
+    view.add_argument("--db", type=Path, default=Path(".rib/facts.sqlite"), help="fact store")
+    view.add_argument("--yes", action="store_true", help="don't ask before spending")
+    view.add_argument("--estimate-only", action="store_true",
+                      help="print the plan and cost estimate, then stop")  # fmt: skip
+    view.set_defaults(func=_summarize, view=True)
 
     args = parser.parse_args(argv)
     try:

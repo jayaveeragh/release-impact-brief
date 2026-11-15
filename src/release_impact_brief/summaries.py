@@ -77,7 +77,7 @@ _SERVICE_LINKS = {EdgeKind.ROUTES, EdgeKind.REQUESTS, EdgeKind.USES, EdgeKind.PU
                   EdgeKind.CONSUMES, EdgeKind.CONNECTS}  # fmt: skip
 
 
-def _fence(text: str) -> str:
+def fence(text: str) -> str:
     return "<repo_data>\n" + text.replace("</repo_data", "<\\/repo_data") + "\n</repo_data>"
 
 
@@ -252,7 +252,7 @@ class Summarizer:
         code = "\n".join(source[cls.start_line - 1 : cls.end_line])
         if len(code) > _SOURCE_CHARS:
             code = code[:_SOURCE_CHARS] + "\n[... source truncated ...]"
-        return lines[0] + "\n" + _fence("\n".join(lines[1:]) + "\n\nsource:\n" + code)
+        return lines[0] + "\n" + fence("\n".join(lines[1:]) + "\n\nsource:\n" + code)
 
     def _module_units(self, classes: dict[str, Summary]) -> list[Unit]:
         by_module: dict[str, list[Unit]] = {}
@@ -294,7 +294,7 @@ class Summarizer:
                 else:
                     reason = summary.error if summary is not None else "not asked"
                     lines.append(f"  {u.name}: (no summary: {reason})")
-            prompt = f"module {name}\n" + _fence("\n".join(lines))
+            prompt = f"module {name}\n" + fence("\n".join(lines))
             request = LlmRequest(MODULE_SYSTEM, prompt, MODULE_MAX_TOKENS, MODULE_SCHEMA)
             units.append(Unit(module_id, "module", name, request))
         return units
@@ -315,7 +315,7 @@ class Summarizer:
         items = [i["text"] for i in unclear_items(self.facts.nodes, self.facts.edges)]
         if items:
             lines += ["not settled by the analysis:"] + [f"  - {t}" for t in _limited(items)]
-        prompt = f"repository {self.repo} at {self.sha}\n" + _fence("\n".join(lines))
+        prompt = f"repository {self.repo} at {self.sha}\n" + fence("\n".join(lines))
         return Unit(
             "repo", "repo", self.repo, LlmRequest(REPO_SYSTEM, prompt, REPO_MAX_TOKENS, REPO_SCHEMA)
         )

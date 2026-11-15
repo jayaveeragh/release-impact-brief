@@ -1,6 +1,6 @@
 # release-impact-brief
 
-> Work in progress. Phases 0–2 done (foundation, Java facts, system structure); Phase 3 (LLM interpretation) in progress.
+> Work in progress. Phases 0–3 done (foundation, Java facts, system structure, LLM interpretation); Phase 4 (web app) next.
 
 Paste a public GitHub URL and get a visual explanation of the repository, from architecture down to the branches inside one endpoint. Describe a bug and get a one-page brief of what a likely fix could affect, to help decide whether the fix goes into a release.
 
@@ -23,7 +23,8 @@ Design rule: **facts first, creativity on top.** Deterministic parsing produces 
 | 2     | `4ff78eb`     | Connections between services: gateway routes, HTTP calls (`lb://` / `http://` URLs, Feign, discovery lookups, `@Value` hosts from config), data stores (MySQL, Postgres, H2, HSQLDB, Redis, MongoDB, RabbitMQ, Kafka, Elasticsearch) from config or dependencies, and messaging (publish / consume). Each with confidence and file:line; targets that match no service are listed, not guessed. The fact store rebuilds itself when its schema changes. Matches hand-written answer keys for all 3 repos |
 | 2     | `7834966`     | Unknowns made visible: outside systems (from config URL/host keys and calls that match no service) become grey-box `external_system` facts with `unknown` edges; `rib structure` ends with an unclear-items list (outside systems, guessed links, unclear verdicts, unresolved message destinations, main-code call gaps). Completes Phase 2 |
 | 3     | `cf194ff`     | LLM access: one small provider interface (Claude through the Anthropic SDK, plus a free offline fake for tests), settings from `.env`, and cost control that can be switched off: before a run it estimates the worst-case cost with the API's token counter and refuses to pass a spending cap; actual cost is always added up |
-| 3     | _next commit_ | Bottom-up summaries: `rib summarize` explains each class (from its facts and source), then each module, then the whole repo, with repo content fenced off as untrusted data. Answers are cached, so a re-run is free; requests run in parallel; with cost control on it shows a cost range and asks before spending. `RIB_MODEL=fake` runs it for free |
+| 3     | `1620830`     | Bottom-up summaries: `rib summarize` explains each class (from its facts and source), then each module, then the whole repo, with repo content fenced off as untrusted data. Answers are cached, so a re-run is free; requests run in parallel; with cost control on it shows a cost range and asks before spending. `RIB_MODEL=fake` runs it for free |
+| 3     | _next commit_ | View spec and validator (completes Phase 3): `rib view` asks the LLM how to present the repo (architecture diagram, flows, narrative) using short fact IDs, then a validator maps every reference back to a real fact and removes anything invented: unknown boxes, links whose fact doesn't connect the boxes drawn, flows with fewer than two real steps. Unsupported links survive only when marked inferred with a reason. Confidence and the layout/runtime verdicts always come from the facts |
 
 ## Development
 
@@ -73,6 +74,12 @@ Copy `.env.example` to `.env` (gitignored) and set `ANTHROPIC_API_KEY`. `RIB_MOD
 ```
 
 This writes a summary for each class, each module and the whole repo, using the LLM. With cost control on it first shows how many requests it will make and a cost range, and asks before spending (`--yes` skips the question, `--estimate-only` stops there). Answers are cached in `.rib/facts.sqlite`, so running it again costs nothing; a failed answer is reported and asked again next time. Try it for free with `RIB_MODEL=fake`.
+
+```bash
+.venv/bin/rib view https://github.com/spring-petclinic/spring-petclinic-microservices [--yes]
+```
+
+This runs the summaries, then asks the LLM how to present the repo and writes a validated view spec to `.rib/views/<owner>__<repo>@<commit>.json`. Every box, step and link in it points at a real fact; anything the LLM invented is removed and listed.
 
 There is no web UI yet; the first browser view arrives in Phase 4.
 

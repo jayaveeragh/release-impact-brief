@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-11-14
+Last updated: 2026-11-15
 
 ## Where we are
 
@@ -23,16 +23,18 @@ Phase 1 done criterion met: `rib facts` on spring-petclinic @ `500158f` matches 
 - The owner commits manually from their own account. Claude never commits and never adds a Co-Authored-By line.
 - One phase at a time. A plan is approved before coding. Each commit-sized change stops for review.
 
-## Phase 3: LLM interpretation (plan approved 2026-11-12)
+## Phase 3: LLM interpretation (done; plan approved 2026-11-12)
 
 | Step | State |
 |---|---|
 | 1. Provider interface (Anthropic SDK + offline fake), settings from `.env`, cost tracking, spending cap; cost control can be switched off | done (cf194ff; offline tests; live test not run yet) |
-| 2. Bottom-up summaries (class → module → repo) from facts + source, repo content fenced as untrusted data, cached by exact request; `rib summarize` | done (next commit; offline tests; not yet run against the real API) |
-| 3. View spec schema + generation with structured output; `rib view <url>` | next |
-| 4. Validator: unknown fact references removed and logged, inferred items marked; tests that feed invented nodes | |
+| 2. Bottom-up summaries (class → module → repo) from facts + source, repo content fenced as untrusted data, cached by exact request; `rib summarize` | done (1620830; offline tests; not yet run against the real API) |
+| 3. View spec schema + generation with structured output; `rib view <url>` | done (next commit) |
+| 4. Validator: unknown fact references removed and logged, inferred items marked; tests that feed invented nodes | done (next commit) |
 
-Done when: a CLI produces a valid view spec, and invented nodes never survive validation.
+Phase 3 done criterion met on the fake provider: `rib view` writes a valid view spec, and `test_generated_view_holds_only_real_facts` feeds invented nodes and links that never survive. Still to do once an API key is in `.env`: one real `rib view` run on each petclinic repo to see the LLM's actual output.
+
+## Phase 4–6 plans: approved 2026-11-15 (see DECISIONS); commits per phase from now on
 
 ## Phase 2: System structure (done)
 
@@ -51,7 +53,7 @@ Phase 2 done criterion met: both petclinic repos are classified correctly with t
 
 1. Check CI on GitHub → Actions for the latest push.
 2. `.rib/facts.sqlite` rebuilds itself when the schema changes, and `rib` re-extracts every run: no more `rm -rf .rib`.
-3. Next: Phase 3 step 3 (view spec). Before the first paid run: put `ANTHROPIC_API_KEY` in `.env`, run `.venv/bin/pytest -m llm` once (well under a cent), then `rib summarize <url> --estimate-only` on each test repo (token counting is free) to get measured cost ranges — and decide the model per level (Opus everywhere / Sonnet for class summaries / Batch API).
+3. Next: Phase 4 (web app overview). Owner is setting up an API key + Console credits (the $20 claude.ai plan doesn't cover the API); then `pytest -m llm`, `rib view <url> --estimate-only`, and one real `rib view` per petclinic repo.
 
 Identity check for commits: run `git config user.email` (not `--global`) inside the repo; it must show the jayaveeragh noreply address.
 

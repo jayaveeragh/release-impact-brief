@@ -10,11 +10,13 @@ import re
 import subprocess
 import tempfile
 from collections import Counter
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlsplit
+
+from dotenv import dotenv_values, load_dotenv
 
 _OWNER_RE = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})")
 _REPO_RE = re.compile(r"[A-Za-z0-9._-]{1,100}")
@@ -42,6 +44,44 @@ class Limits:
     max_total_bytes: int = 200 * 1024 * 1024
     max_file_bytes: int = 1024 * 1024
     timeout_seconds: int = 120
+
+
+_MB = 1024 * 1024
+
+
+def load_limits(env: Mapping[str, str] | None = None,
+                env_file: Path | str | None = ".env") -> Limits:  # fmt: skip
+    """Limits from settings, defaults otherwise.
+
+    RIB_MAX_FILES      files in the repo (default 20000)
+    RIB_MAX_SIZE_MB    total size of the files, in MB (default 200)
+    RIB_MAX_FILE_MB    files larger than this are skipped, in MB (default 1)
+    RIB_FETCH_TIMEOUT  seconds per git call (default 120)
+
+    Read from `env` (default: the process environment), with `env_file` filling gaps;
+    variables already set win over the file.
+    """
+    if env is None:
+        if env_file is not None:
+            load_dotenv(env_file, override=False)
+        source: Mapping[str, str] = os.environ
+    else:
+        from_file = dotenv_values(env_file) if env_file is not None else {}
+        source = {**{k: v for k, v in from_file.items() if v is not None}, **env}
+
+    def number(name: str, default: int) -> int:
+        raw = source.get(name, str(default)).strip()
+        if not raw.isdigit() or int(raw) < 1:
+            raise ValueError(f"{name} must be a whole number above 0, not {raw!r}")
+        return int(raw)
+
+    defaults = Limits()
+    return Limits(
+        max_files=number("RIB_MAX_FILES", defaults.max_files),
+        max_total_bytes=number("RIB_MAX_SIZE_MB", defaults.max_total_bytes // _MB) * _MB,
+        max_file_bytes=number("RIB_MAX_FILE_MB", defaults.max_file_bytes // _MB) * _MB,
+        timeout_seconds=number("RIB_FETCH_TIMEOUT", defaults.timeout_seconds),
+    )
 
 
 @dataclass(frozen=True)
@@ -175,11 +215,14 @@ def scan(root: Path, limits: Limits) -> tuple[int, int, Counter[str], list[str]]
             file_count += 1
             total_bytes += size
             if file_count > limits.max_files:
-                raise FetchError(f"Repo has more than {limits.max_files} files; limit exceeded.")
+                raise FetchError(
+                    f"Repo has more than {limits.max_files} files; limit exceeded. "
+                    "Raise RIB_MAX_FILES in .env to allow bigger repos."
+                )
             if total_bytes > limits.max_total_bytes:
                 raise FetchError(
-                    f"Repo is larger than {limits.max_total_bytes // (1024 * 1024)} MB; "
-                    "limit exceeded."
+                    f"Repo is larger than {limits.max_total_bytes // _MB} MB; limit exceeded. "
+                    "Raise RIB_MAX_SIZE_MB in .env to allow bigger repos."
                 )
             by_extension[path.suffix.lower() or "(none)"] += 1
     return file_count, total_bytes, by_extension, skipped_large
@@ -189,8 +232,14 @@ def scan(root: Path, limits: Limits) -> tuple[int, int, Counter[str], list[str]]
 def fetch_repo(
     url: str, ref: str | None = None, limits: Limits | None = None
 ) -> Iterator[FetchResult]:
-    """Fetch a public GitHub repo at a pinned commit; the clone is deleted on exit."""
-    limits = limits or Limits()
+    """Fetch a public GitHub repo at a pinned commit; the clone is deleted on exit.
+
+    Without `limits`, they come from settings (load_limits)."""
+    if limits is None:
+        try:
+            limits = load_limits()
+        except ValueError as error:  # a mistyped setting: show it like any fetch problem
+            raise FetchError(str(error)) from None
     repo = parse_github_url(url)
     sha = resolve_sha(repo.url, ref, limits)
     with tempfile.TemporaryDirectory(prefix="rib-") as tmp:

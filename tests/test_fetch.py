@@ -10,6 +10,7 @@ from release_impact_brief.fetch import (
     RepoRef,
     clone_at,
     fetch_repo,
+    load_limits,
     parse_github_url,
     resolve_sha,
     scan,
@@ -162,3 +163,35 @@ def test_fetch_real_repo_and_clean_up() -> None:
         assert len(result.commit_sha) == 40
         assert result.by_extension[".java"] > 10
     assert not path.exists()
+
+
+def test_limits_default_and_come_from_settings(tmp_path: Path) -> None:
+    assert load_limits({}, env_file=None) == Limits()
+    env_file = tmp_path / ".env"
+    env_file.write_text("RIB_MAX_FILES=50000\nRIB_MAX_SIZE_MB=500\n")
+    limits = load_limits({"RIB_MAX_FILE_MB": "2", "RIB_FETCH_TIMEOUT": "300"}, env_file=env_file)
+    assert limits == Limits(max_files=50_000, max_total_bytes=500 * 1024 * 1024,
+                            max_file_bytes=2 * 1024 * 1024, timeout_seconds=300)  # fmt: skip
+
+
+@pytest.mark.parametrize("name", ["RIB_MAX_FILES", "RIB_MAX_SIZE_MB", "RIB_MAX_FILE_MB",
+                                  "RIB_FETCH_TIMEOUT"])  # fmt: skip
+@pytest.mark.parametrize("value", ["0", "-5", "lots", "1.5"])
+def test_bad_limit_settings_name_the_variable(name: str, value: str) -> None:
+    with pytest.raises(ValueError, match=name):
+        load_limits({name: value}, env_file=None)
+
+
+def test_limit_errors_say_which_setting_to_raise(tmp_path: Path) -> None:
+    for i in range(3):
+        (tmp_path / f"f{i}.txt").write_text("x" * 10)
+    with pytest.raises(FetchError, match="RIB_MAX_FILES"):
+        scan(tmp_path, Limits(max_files=2))
+    with pytest.raises(FetchError, match="RIB_MAX_SIZE_MB"):
+        scan(tmp_path, Limits(max_total_bytes=15))
+
+
+def test_a_mistyped_limit_setting_is_a_clear_fetch_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RIB_MAX_FILES", "lots")
+    with pytest.raises(FetchError, match="RIB_MAX_FILES"), fetch_repo("https://github.com/a/b"):
+        pass

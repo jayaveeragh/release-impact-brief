@@ -27,7 +27,8 @@ Design rule: **facts first, creativity on top.** Deterministic parsing produces 
 | 3     | `4284422`     | View spec and validator (completes Phase 3): `rib view` asks the LLM how to present the repo (architecture diagram, flows, narrative) using short fact IDs, then a validator maps every reference back to a real fact and removes anything invented: unknown boxes, links whose fact doesn't connect the boxes drawn, flows with fewer than two real steps. Unsupported links survive only when marked inferred with a reason. Confidence and the layout/runtime verdicts always come from the facts |
 | 3     | `92e87d6`     | Free local models: an Ollama provider runs open models on your own machine (default `qwen3:14b`), so summaries and views cost nothing and no code leaves the machine; Claude stays available as an opt-in |
 | 4     | `5d4c3e5`     | Web app (first showable milestone): `rib serve` opens a local page where you paste a GitHub URL, watch the analysis progress, and get an interactive architecture diagram (boxes inside boxes, links styled by confidence, dashed for anything outside the repo or inferred), flows, a narrative with clickable citations, and tables for services, endpoints, data model, data stores / outside systems and unclear items — every row links to the exact line on GitHub. New facts: a service exposes the endpoints and owns the entities in its module |
-| 5     | _next commit_ | Drill-down: click an endpoint for its **branch map** — every `if` / `switch` / ternary / `catch`, which request inputs drive it (traced through local variables, query results, getters into request-object fields, and Spring validation: `result.hasErrors()` = the `@Valid` object's constraints plus earlier `rejectValue`s), where each path returns or throws and what it calls, and a matrix that separates driving inputs from pass-through and unused ones. Module pages show summaries, classes, endpoints and the main flows the LLM picks on request, every step checked against the facts. Matches a hand-written answer key for three petclinic endpoints |
+| 5     | `d514eae`     | Drill-down: click an endpoint for its **branch map** — every `if` / `switch` / ternary / `catch`, which request inputs drive it (traced through local variables, query results, getters into request-object fields, and Spring validation: `result.hasErrors()` = the `@Valid` object's constraints plus earlier `rejectValue`s), where each path returns or throws and what it calls, and a matrix that separates driving inputs from pass-through and unused ones. Module pages show summaries, classes, endpoints and the main flows the LLM picks on request, every step checked against the facts. Matches a hand-written answer key for three petclinic endpoints |
+| 5     | _next commit_ | Fetch limits are settings: `RIB_MAX_FILES`, `RIB_MAX_SIZE_MB`, `RIB_MAX_FILE_MB`, `RIB_FETCH_TIMEOUT` in `.env` (defaults unchanged); the "limit exceeded" message says which one to raise |
 
 ## Development
 
@@ -48,7 +49,7 @@ python3 -m venv .venv
 .venv/bin/rib fetch https://github.com/spring-projects/spring-petclinic [--ref <branch|tag|sha>]
 ```
 
-This fetches one pinned commit into a temp folder (nothing from the repo is executed), prints the commit SHA and file counts, then deletes the clone.
+This fetches one pinned commit into a temp folder (nothing from the repo is executed), prints the commit SHA and file counts, then deletes the clone. Repos over 20,000 files or 200 MB are refused; raise `RIB_MAX_FILES` / `RIB_MAX_SIZE_MB` in `.env` for bigger ones (summarising a big repo with a local model takes hours the first time).
 
 ```bash
 .venv/bin/rib facts https://github.com/spring-projects/spring-petclinic [--kind class|method|field|endpoint|entity|module|config|...]

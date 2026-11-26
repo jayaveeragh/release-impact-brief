@@ -1,0 +1,181 @@
+{
+  "repo": "https://github.com/spring-projects/spring-petclinic",
+  "commit_sha": "500158f732419217507c7656904b8e6aa1bcc0d6",
+  "written": "2026-11-22, by reading the petclinic source at this commit by hand, before the chat existed",
+  "rule": "an answer hits when at least one of its citations overlaps one of must_cite_any; every claim it shows must carry a citation to real lines",
+  "questions": [
+    {
+      "q": "What happens when someone submits the new owner form with an empty last name?",
+      "context": {
+        "kind": "endpoint",
+        "id": "java:endpoint:POST /owners/new"
+      },
+      "must_cite_any": [
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java",
+          "start": 77,
+          "end": 87
+        },
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/model/Person.java",
+          "start": 36,
+          "end": 39
+        }
+      ]
+    },
+    {
+      "q": "How does the owner search decide between showing a list and going straight to one owner?",
+      "context": {
+        "kind": "repo"
+      },
+      "must_cite_any": [
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java",
+          "start": 94,
+          "end": 130
+        }
+      ]
+    },
+    {
+      "q": "Where are a pet's visits stored?",
+      "context": {
+        "kind": "repo"
+      },
+      "must_cite_any": [
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "start": 35,
+          "end": 37
+        },
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+          "start": 56,
+          "end": 59
+        }
+      ]
+    },
+    {
+      "q": "What validation runs when a new pet is added?",
+      "context": {
+        "kind": "endpoint",
+        "id": "java:endpoint:POST /owners/{ownerId}/pets/new"
+      },
+      "must_cite_any": [
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "start": 94,
+          "end": 97
+        },
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "start": 107,
+          "end": 122
+        },
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/owner/PetValidator.java",
+          "start": 39,
+          "end": 58
+        }
+      ]
+    },
+    {
+      "q": "Which endpoints list the vets, and in what formats?",
+      "context": {
+        "kind": "repo"
+      },
+      "must_cite_any": [
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/vet/VetController.java",
+          "start": 45,
+          "end": 46
+        },
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/vet/VetController.java",
+          "start": 72,
+          "end": 73
+        }
+      ]
+    },
+    {
+      "q": "What happens if a pet's birth date is in the future?",
+      "context": {
+        "kind": "repo"
+      },
+      "must_cite_any": [
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "start": 116,
+          "end": 117
+        },
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "start": 159,
+          "end": 160
+        }
+      ]
+    },
+    {
+      "q": "How is the owner loaded when someone opens /owners/{ownerId}?",
+      "context": {
+        "kind": "endpoint",
+        "id": "java:endpoint:GET /owners/{ownerId}"
+      },
+      "must_cite_any": [
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java",
+          "start": 175,
+          "end": 186
+        },
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/owner/OwnerRepository.java",
+          "start": 60,
+          "end": 60
+        }
+      ]
+    },
+    {
+      "q": "What does the /oups page do?",
+      "context": {
+        "kind": "repo"
+      },
+      "must_cite_any": [
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/system/CrashController.java",
+          "start": 31,
+          "end": 33
+        }
+      ]
+    },
+    {
+      "q": "Which databases can the application use?",
+      "context": {
+        "kind": "repo"
+      },
+      "must_cite_any": [
+        {
+          "file": "src/main/resources/application-mysql.properties",
+          "start": 3,
+          "end": 3
+        },
+        {
+          "file": "src/main/resources/application-postgres.properties",
+          "start": 3,
+          "end": 3
+        }
+      ]
+    },
+    {
+      "q": "How many owners are shown per page in the owner list?",
+      "context": {
+        "kind": "repo"
+      },
+      "must_cite_any": [
+        {
+          "file": "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java",
+          "start": 141,
+          "end": 145
+        }
+      ]
+    }
+  ]
+}

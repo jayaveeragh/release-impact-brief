@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-11-17
+Last updated: 2026-11-24
 
 ## Where we are
 
@@ -50,13 +50,21 @@ Done: reviewed and committed by the owner (5d4c3e5).
 | Step | State |
 |---|---|
 | 0. GitNexus check (brief): its current docs describe opt-in per-function CFG / control dependence / def-use for all its languages, Java included — recorded in DECISIONS | done |
-| 1. Module view (Level 2): summary, classes with summaries, endpoints, entities, dependencies; LLM-chosen flows on request, validated | done (next commit) |
-| 2. Java branch extraction: if / switch (cases) / ternary / catch with conditions, reads, exits, nesting; locals, calls, rejectValue | done (next commit) |
-| 3. Parameter table + branch map per endpoint, computed on click; matrix of inputs × branches; drives / read as a whole / passed through / unused | done (next commit) |
+| 1. Module view (Level 2): summary, classes with summaries, endpoints, entities, dependencies; LLM-chosen flows on request, validated | done (d514eae) |
+| 2. Java branch extraction: if / switch (cases) / ternary / catch with conditions, reads, exits, nesting; locals, calls, rejectValue | done (d514eae) |
+| 3. Parameter table + branch map per endpoint, computed on click; matrix of inputs × branches; drives / read as a whole / passed through / unused | done (d514eae) |
 
 Phase 5 done criterion met: the branch maps for three hand-checked petclinic endpoints (POST /owners/new, GET /owners, POST /owners/{ownerId}/pets/new) match the hand-written answer key — branch lines, kinds, drivers, exits, returns, throws, validation fields, the custom validator and input roles (`test_petclinic_branch_maps_match_hand_written_answer_key`).
 
-## Phase 6: plan approved 2026-11-15 (see DECISIONS); commit per phase
+## Phase 6: Chat (plan approved 2026-11-15)
+
+| Step | State |
+|---|---|
+| 1. Retrieval: question + page context -> numbered snippets of real source (names, branch conditions, calls, summaries, synonyms; endpoint context brings handler, callees, branch map); kept read-only clone in `.rib/clones/` | done (next commit) |
+| 2. Answers: structured output, every statement cites snippet ids; uncited statements removed and listed; `not_settled` for what the code can't decide; cached | done (next commit) |
+| 3. Chat panel on the overview, module and endpoint pages; paid models ask first | done (next commit) |
+
+Phase 6 done criterion met: on 10 hand-written petclinic questions every statement shown cites existing lines (20 statements, 0 removed) and 10/10 answers cite the hand-marked code — `tests/test_chat_eval.py` with the local model (details in PROJECT_NOTES).
 
 ## Phase 2: System structure (done)
 
@@ -75,7 +83,7 @@ Phase 2 done criterion met: both petclinic repos are classified correctly with t
 
 1. Check CI on GitHub → Actions for the latest push.
 2. `.rib/facts.sqlite` rebuilds itself when the schema changes, and `rib` re-extracts every run: no more `rm -rf .rib`.
-3. Next: owner reviews Phase 5 in the browser (endpoint pages and module pages), commits, then Phase 6 (chat with citations) — hand-write ~10 petclinic questions with the code locations a good answer must cite before building it.
+3. Next: owner reviews Phase 6 (chat panel on any page), commits; Phase 7 (release impact brief) needs a plan approved first.
 
 Identity check for commits: run `git config user.email` (not `--global`) inside the repo; it must show the jayaveeragh noreply address.
 

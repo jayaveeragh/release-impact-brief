@@ -9,6 +9,7 @@ GET  /api/views/{name}               one view: spec + fact panels
 GET  /api/views/{name}/branches?endpoint=<id>   branch map of one endpoint (facts only)
 POST /api/views/{name}/flows {module, confirm?} LLM-chosen flows of one module, validated;
                                      a paid model first answers with the estimate
+POST /api/views/{name}/chat {question, context, confirm?}  answer from cited code (read-only)
 
 No secrets are ever returned: settings stay on the server.
 """
@@ -24,6 +25,8 @@ from pydantic import BaseModel
 
 from release_impact_brief.adapters import Extraction
 from release_impact_brief.branches import branch_map
+from release_impact_brief.chat import ask, chat_request
+from release_impact_brief.clones import ensure_clone
 from release_impact_brief.fetch import FetchError
 from release_impact_brief.llm import (
     CostUnknown,
@@ -47,6 +50,12 @@ class AnalysisIn(BaseModel):
 
 class FlowsIn(BaseModel):
     module: str
+    confirm: bool = False
+
+
+class ChatIn(BaseModel):
+    question: str
+    context: dict[str, str] = {"kind": "repo"}
     confirm: bool = False
 
 
@@ -138,6 +147,33 @@ def create_app(runner: JobRunner, static_dir: Path | None) -> FastAPI:
         try:
             return generate_module_flows(facts, body.module, module, view["repo"],
                                          view["commit"], session, cache)  # fmt: skip
+        except (LlmAuthError, LlmUnavailable, LlmError, SpendingCapExceeded, CostUnknown) as e:
+            raise HTTPException(503, str(e)) from None
+        finally:
+            cache.close()
+
+    @app.post("/api/views/{name}/chat")
+    def chat(name: str, body: ChatIn) -> dict[str, Any]:
+        question = body.question.strip()
+        if not question or len(question) > 2000:
+            raise HTTPException(400, "ask a question (up to 2000 characters)")
+        view = load(name)
+        facts = facts_of(view)
+        try:
+            checkout = ensure_clone(view["repo"], view["commit"], runner.db.parent / "clones")
+        except FetchError as error:
+            raise HTTPException(503, str(error)) from None
+        session = runner.session()
+        if session.settings.cost_control and not body.confirm:
+            request, _ = chat_request(facts, view, checkout, question, body.context)
+            estimate = session.estimate([request])
+            if (estimate.max_usd or 0) > 0:
+                return {"needs_confirmation": True, "estimate": {
+                    "min_usd": estimate.min_usd, "max_usd": estimate.max_usd,
+                    "cap_usd": session.settings.spend_cap_usd}}  # fmt: skip
+        cache = SummaryCache(runner.db)
+        try:
+            return ask(facts, view, checkout, question, body.context, session, cache)
         except (LlmAuthError, LlmUnavailable, LlmError, SpendingCapExceeded, CostUnknown) as e:
             raise HTTPException(503, str(e)) from None
         finally:

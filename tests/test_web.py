@@ -163,3 +163,24 @@ def test_paid_module_flows_ask_first(tmp_path: Path, repo: Path) -> None:
     assert provider.calls == []
     second = c.post(f"/api/views/{view}/flows", json={"module": "build:module:.", "confirm": True})
     assert second.status_code == 200 and "flows" in second.json() and len(provider.calls) == 1
+
+
+def test_chat_answers_from_a_kept_clone(
+    tmp_path: Path, repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, view = analysed(tmp_path, repo)
+    calls = []
+
+    def fake_clone(url: str, sha: str, root: Path, *args: Any, **kwargs: Any) -> Path:
+        calls.append((url, sha))
+        return repo
+
+    monkeypatch.setattr("release_impact_brief.web.app.ensure_clone", fake_clone)
+    body = {"question": "What does hello return?", "context": {"kind": "repo"}}
+    result = c.post(f"/api/views/{view}/chat", json=body)
+    assert result.status_code == 200, result.text
+    answer = result.json()
+    assert answer["segments"] == []  # the fake model cites nothing, so nothing is shown
+    assert any(s["file"].endswith("Hello.java") for s in answer["sources"])
+    assert calls == [("https://github.com/acme/shop", SHA)]
+    assert c.post(f"/api/views/{view}/chat", json={"question": " "}).status_code == 400

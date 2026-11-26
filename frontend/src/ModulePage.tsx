@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ChatPanel } from "./ChatPanel";
 import { api, factId, moduleOf, routes, sourceUrl, type ModuleFlows, type NeedsConfirmation,
   type View } from "./api";
 
@@ -84,6 +85,8 @@ export function ModulePage({ name, module }: { name: string; module: string }) {
 
       {entities.length > 0 && <><h2>Entities</h2><p>{entities.map((e) => (
         <a key={e.id} className="cite" href={link(e.file, e.line)} target="_blank" rel="noreferrer">{e.table}</a>))}</p></>}
+
+      <ChatPanel name={name} repo={view.repo} commit={view.commit} context={{ kind: "module", id: module }} />
 
       <h2>Classes <span className="count">{m.classes.length}</span></h2>
       <div className="table-wrap"><table className="table">

@@ -145,6 +145,19 @@ export interface ModuleFlows {
   facts: Record<string, FactInfo>;
 }
 
+export interface Citation { id: string; file: string; start: number; end: number; label: string }
+
+export interface ChatAnswer {
+  question: string;
+  segments: { text: string; citations: Citation[] }[];
+  not_settled: string[];
+  removed: { text: string; reason: string }[];
+  sources: Citation[];
+  model: string;
+}
+
+export type ChatContext = { kind: "repo" } | { kind: "module" | "endpoint"; id: string };
+
 export interface NeedsConfirmation {
   needs_confirmation: true;
   estimate: { min_usd: number; max_usd: number; cap_usd: number };
@@ -172,6 +185,9 @@ export const api = {
   view: (name: string) => call<View>(`/api/views/${encodeURIComponent(name)}`),
   branches: (name: string, endpoint: string) =>
     call<BranchMap>(`/api/views/${encodeURIComponent(name)}/branches?endpoint=${encodeURIComponent(endpoint)}`),
+  chat: (name: string, question: string, context: ChatContext, confirm = false) =>
+    call<ChatAnswer | NeedsConfirmation>(`/api/views/${encodeURIComponent(name)}/chat`,
+      { method: "POST", body: JSON.stringify({ question, context, confirm }) }),
   flows: (name: string, module: string, confirm = false) =>
     call<ModuleFlows | NeedsConfirmation>(`/api/views/${encodeURIComponent(name)}/flows`,
       { method: "POST", body: JSON.stringify({ module, confirm }) }),

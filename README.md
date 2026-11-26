@@ -1,6 +1,6 @@
 # release-impact-brief
 
-> Work in progress. Phases 0–5 done (foundation, Java facts, system structure, LLM interpretation, web app, drill-down and branch map); Phase 6 (chat) next.
+> Work in progress. Phases 0–6 done (foundation, Java facts, system structure, LLM interpretation, web app, drill-down and branch map, chat); Phase 7 (release impact brief) next.
 
 Paste a public GitHub URL and get a visual explanation of the repository, from architecture down to the branches inside one endpoint. Describe a bug and get a one-page brief of what a likely fix could affect, to help decide whether the fix goes into a release.
 
@@ -28,7 +28,8 @@ Design rule: **facts first, creativity on top.** Deterministic parsing produces 
 | 3     | `92e87d6`     | Free local models: an Ollama provider runs open models on your own machine (default `qwen3:14b`), so summaries and views cost nothing and no code leaves the machine; Claude stays available as an opt-in |
 | 4     | `5d4c3e5`     | Web app (first showable milestone): `rib serve` opens a local page where you paste a GitHub URL, watch the analysis progress, and get an interactive architecture diagram (boxes inside boxes, links styled by confidence, dashed for anything outside the repo or inferred), flows, a narrative with clickable citations, and tables for services, endpoints, data model, data stores / outside systems and unclear items — every row links to the exact line on GitHub. New facts: a service exposes the endpoints and owns the entities in its module |
 | 5     | `d514eae`     | Drill-down: click an endpoint for its **branch map** — every `if` / `switch` / ternary / `catch`, which request inputs drive it (traced through local variables, query results, getters into request-object fields, and Spring validation: `result.hasErrors()` = the `@Valid` object's constraints plus earlier `rejectValue`s), where each path returns or throws and what it calls, and a matrix that separates driving inputs from pass-through and unused ones. Module pages show summaries, classes, endpoints and the main flows the LLM picks on request, every step checked against the facts. Matches a hand-written answer key for three petclinic endpoints |
-| 5     | _next commit_ | Fetch limits are settings: `RIB_MAX_FILES`, `RIB_MAX_SIZE_MB`, `RIB_MAX_FILE_MB`, `RIB_FETCH_TIMEOUT` in `.env` (defaults unchanged); the "limit exceeded" message says which one to raise |
+| 5     | `1e650c2`     | Fetch limits are settings: `RIB_MAX_FILES`, `RIB_MAX_SIZE_MB`, `RIB_MAX_FILE_MB`, `RIB_FETCH_TIMEOUT` in `.env` (defaults unchanged); the "limit exceeded" message says which one to raise |
+| 6     | _next commit_ | Chat: ask about the repo, a module or an endpoint; answers come only from retrieved snippets of this commit's code, every statement links to the lines it comes from, uncited statements are removed and listed, and what the code can't settle is said separately. Read-only. Checked against 10 hand-written petclinic questions |
 
 ## Development
 

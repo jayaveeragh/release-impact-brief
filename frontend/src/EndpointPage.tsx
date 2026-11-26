@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ChatPanel } from "./ChatPanel";
 import { api, routes, sourceUrl, type Branch, type BranchMap, type InputRow, type View } from "./api";
 
 // One endpoint, Level 3: its inputs, which of them drive which branches, and where each
@@ -91,6 +92,9 @@ export function EndpointPage({ name, endpoint }: { name: string; endpoint: strin
       </ol>
       <p className="muted">Exits outside any branch: {map.returns.filter((l) => !map.branches.some((b) => b.exits.includes(l) || b.else_exits?.includes(l)))
         .map((l) => <span key={l} className="exit">return <L line={l} /></span>)}</p>
+
+      <ChatPanel name={name} repo={view.repo} commit={view.commit}
+        context={{ kind: "endpoint", id: endpoint }} />
 
       <h2>Parameters</h2>
       <div className="table-wrap"><table className="table">

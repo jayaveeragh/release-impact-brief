@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, factId, routes, sourceUrl, type FactInfo, type Section, type Verdict, type View } from "./api";
+import { ChatPanel } from "./ChatPanel";
 import { Diagram } from "./Diagram";
 import { Panels } from "./Panels";
 
@@ -42,6 +43,7 @@ export function ViewPage({ name }: { name: string }) {
             </>
           ) : <p className="muted">No architecture diagram in this view.</p>}
           <Panels name={name} view={view} onSelect={setSelected} link={link} />
+          <ChatPanel name={name} repo={view.repo} commit={view.commit} context={{ kind: "repo" }} />
         </div>
         <aside className="side-col">
           <FactDetail id={selected} name={name} view={view} link={link} />

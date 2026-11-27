@@ -6,7 +6,7 @@ bombs), XML refuses entities. Values of secret-looking keys are redacted, and
 Kubernetes Secrets keep only their kind and name.
 
 Fact IDs:
-  build:module:<dir>
+  build:module:<dir>          Maven, Gradle, pyproject.toml, requirements.txt
   deploy:dockerfile:<file>
   deploy:compose:<file>#<service>
   deploy:k8s:<file>#<Kind>/<name>
@@ -32,7 +32,17 @@ _PLACEHOLDER = re.compile(r"^\$\{[^}]*\}$")
 _MAX_YAML_NODES = 20_000
 # Processing order: Maven before Gradle settings before Gradle builds, so a module's
 # name and coordinates come from the most precise file.
-_ORDER = ("maven", "gradle_settings", "gradle_build", "dockerfile", "compose", "spring", "yaml")
+_ORDER = (
+    "maven",
+    "gradle_settings",
+    "gradle_build",
+    "pyproject",
+    "requirements",
+    "dockerfile",
+    "compose",
+    "spring",
+    "yaml",
+)
 
 
 def _kind(rel: str) -> str | None:
@@ -44,6 +54,10 @@ def _kind(rel: str) -> str | None:
         return "gradle_settings"
     if name in ("build.gradle", "build.gradle.kts"):
         return "gradle_build"
+    if name == "pyproject.toml":
+        return "pyproject"
+    if name == "requirements.txt":
+        return "requirements"
     if name == "Dockerfile":
         return "dockerfile"
     if _SPRING_CONFIG.match(name):
@@ -132,7 +146,17 @@ def _names(value: Any) -> list[str]:
 class StructureAdapter:
     language: str = "structure"
     # "" = files without an extension, e.g. Dockerfile. Files are then picked by name.
-    extensions: tuple[str, ...] = (".xml", ".gradle", ".kts", ".yml", ".yaml", ".properties", "")
+    extensions: tuple[str, ...] = (
+        ".xml",
+        ".gradle",
+        ".kts",
+        ".yml",
+        ".yaml",
+        ".properties",
+        ".toml",
+        ".txt",
+        "",
+    )
 
     def extract(self, root: Path, files: Sequence[str]) -> Extraction:
         out = Extraction()
@@ -150,6 +174,10 @@ class StructureAdapter:
                         builds.gradle_settings(rel, text)
                     case "gradle_build":
                         builds.gradle_build(rel, text)
+                    case "pyproject":
+                        builds.pyproject(rel, text)
+                    case "requirements":
+                        builds.requirements(rel, text)
                     case "dockerfile":
                         _dockerfile(rel, text, out)
                     case "compose":
@@ -158,7 +186,8 @@ class StructureAdapter:
                         _spring(rel, text, out)
                     case "yaml":
                         _kubernetes(rel, text, out)
-            except (ParseError, ValueError, yaml.YAMLError):  # defusedxml errors are ValueErrors
+            # defusedxml and tomllib errors are ValueErrors
+            except (ParseError, ValueError, yaml.YAMLError):
                 out.files_with_errors.append(rel)
             out.files_parsed += 1
         builds.finish(out)

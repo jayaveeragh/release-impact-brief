@@ -67,7 +67,7 @@ export function ModulePage({ name, module }: { name: string; module: string }) {
                 return <li key={j}>{fact?.kind === "endpoint"
                   ? <a className="cite" href={routes.endpoint(name, id)}>{label}</a>
                   : <a className="cite" href={link(fact?.file ?? "", fact?.line)} target="_blank" rel="noreferrer">
-                    {id.replace(/^java:method:/, "")}</a>}</li>;
+                    {id.replace(/^\w+:method:/, "")}</a>}</li>;
               })}</ol>
             </article>
           ))

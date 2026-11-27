@@ -1,7 +1,8 @@
 """System structure on top of code and build facts: services and repo classification.
 
-A service is a `@SpringBootApplication` class in main code (not tests), placed in
-the build module whose directory holds it. Its name comes from
+A service is a `@SpringBootApplication` class, or a Python module that creates a
+FastAPI or Flask app, in main code (not tests), placed in the build module whose
+directory holds it. Its name comes from
 `spring.application.name` in that module's default config, else the module, else
 the class. Classification is computed from facts, never stored, and every verdict
 carries the evidence (file and line) it was based on; conflicting signals give
@@ -36,7 +37,17 @@ _INFRASTRUCTURE = {
 
 
 def is_test(path: str) -> bool:
+    if path.endswith(".py"):
+        parts = path.split("/")
+        name = parts[-1]
+        return bool({"tests", "test"} & set(parts[:-1])) or name.startswith("test_") or \
+            name.endswith("_test.py") or name in ("tests.py", "conftest.py")  # fmt: skip
     return "/src/test/" in f"/{path}"
+
+
+def _short_name(node_id: str) -> str:
+    """`java:class:a.b.App` -> `App`; `python:class:app.main` -> `main`."""
+    return node_id.split(":", 2)[-1].rsplit(".", 1)[-1]
 
 
 def module_dir(path: str, module_dirs: Iterable[str]) -> str | None:
@@ -121,7 +132,10 @@ def add_services(out: Extraction) -> None:
         n
         for n in out.nodes
         if n.kind == NodeKind.CLASS
-        and "SpringBootApplication" in n.attributes["annotations"]
+        and (
+            "SpringBootApplication" in n.attributes["annotations"]
+            or n.attributes.get("app_framework")
+        )  # a Python module creating a FastAPI/Flask app
         and not is_test(n.file)
     ]
     seen: set[str] = set()
@@ -132,7 +146,7 @@ def add_services(out: Extraction) -> None:
         app_name = _default(own, "spring.application.name")
         if app_name and app_name["value"]:
             name, source = str(app_name["value"]), "spring.application.name"
-        elif module is not None:
+        elif module is not None and module.name and not module.name.startswith("("):
             name, source = module.name, "module"
         else:
             name, source = main.name, "class"
@@ -180,7 +194,12 @@ def datasource_url(value: str) -> str:
 
 def _layout(modules: list[Node], edges: list[Edge]) -> dict[str, Any]:
     if not modules:
-        return {"value": "unclear", "evidence": [_evidence("no Maven or Gradle build file", None)]}
+        return {
+            "value": "unclear",
+            "evidence": [
+                _evidence("no build file (Maven, Gradle, pyproject.toml, requirements.txt)", None)
+            ],
+        }
     ids = {m.id for m in modules}
     children = {e.dst for e in edges if e.kind == EdgeKind.CONTAINS and e.src in ids}
     roots = [m for m in modules if m.id not in children]
@@ -207,14 +226,26 @@ def classify(nodes: Iterable[Node], edges: Iterable[Edge]) -> dict[str, Any]:
     services = [n for n in nodes if n.kind == NodeKind.SERVICE]
     layout = _layout(modules, edges)
 
+    by_id = {n.id: n for n in nodes}
+
+    def kind_of(service: Node) -> str:
+        main = by_id.get(service.attributes["main_class"])
+        framework = main.attributes.get("app_framework") if main is not None else None
+        return {"fastapi": "FastAPI", "flask": "Flask"}.get(framework or "", "Spring Boot")
+
     evidence = [
-        _evidence(f"Spring Boot app {s.name} ({s.attributes['main_class'].rsplit('.', 1)[-1]})",
+        _evidence(f"{kind_of(s)} app {s.name} ({_short_name(s.attributes['main_class'])})",
                   s.file, s.start_line)
         for s in services
     ]  # fmt: skip
     if not services:
         value = "library" if modules else "unclear"
-        evidence.append(_evidence("no @SpringBootApplication class in main code", None))
+        evidence.append(
+            _evidence(
+                "no app entry point in main code (@SpringBootApplication, a FastAPI or Flask app)",
+                None,
+            )
+        )
         if modules:
             evidence[-1]["file"] = modules[0].file
         return {"layout": layout, "runtime": {"value": value, "evidence": evidence}}

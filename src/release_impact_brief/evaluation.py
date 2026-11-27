@@ -28,7 +28,7 @@ from release_impact_brief.system import is_test
 
 
 def _class_of(method_id: str) -> str:
-    return "java:class:" + method_id.removeprefix("java:method:").split("#", 1)[0]
+    return method_id.replace(":method:", ":class:", 1).split("#", 1)[0]
 
 
 def run_case(case: dict[str, Any], session: LlmSession, cache: SummaryCache) -> dict[str, Any]:

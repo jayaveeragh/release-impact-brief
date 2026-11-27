@@ -410,10 +410,16 @@ def analyze_impact(facts: Extraction, view: dict[str, Any], locations: list[str]
     handlers = [h for h in reached if h in g.handler_of]
     changed_classes = {g.class_of(m) for m in list(location_set) + handlers}
     names = {g.nodes[c].name for c in changed_classes if c}
+    # Python: test_users.py / users_test.py go with users.py or a class User(s)
+    lowered = {n.lower() for n in names} | {re.sub(r"(?<!^)(?=[A-Z])", "_", n).lower()
+                                            for n in names}  # fmt: skip
     for n in facts.nodes:
         if n.kind == NodeKind.CLASS and is_test(n.file) and "imports" in n.attributes:
             base = re.sub(r"(Integration)?Tests?$", "", n.name)
-            if base in names and n.id not in tests:
+            py_base = re.sub(r"^test_|_tests?$", "", n.name) if n.language == "python" else None
+            named = base in names or (py_base is not None and (
+                py_base in lowered or py_base.removesuffix("s") in lowered))  # fmt: skip
+            if named and n.id not in tests:
                 tests[n.id] = {"calls": set(), "file": n.file, "line": n.start_line,
                                "named": True}  # fmt: skip
     test_items = [{"id": cid, "kind": "test", "label": g.nodes[cid].name, "file": t["file"],
@@ -468,8 +474,23 @@ def _unseen(g: _Graph, chosen: list[str], reached: dict[str, dict[str, Any]],
         if not g.callers.get(m) and m not in g.handler_of and not node.attributes["constructor"]:
             cls = g.nodes.get(g.class_of(m) or "")
             notes.append(f"{_short(m)} has no callers in the code: something outside it calls it "
-                         f"(the framework, e.g. Spring calling {cls.name if cls else 'it'}, or "
+                         f"(the framework calling {cls.name if cls else 'it'}, or "
                          "reflection), so who depends on it can't be traced")  # fmt: skip
+    # Calls through a library object (`current_user.follow(...)` in Flask-Login) can land
+    # in this repo's code; they aren't followed, so say where they are.
+    for m in dict.fromkeys(chosen):
+        name = g.nodes[m].name
+        owner = g.nodes.get(g.class_of(m) or "")
+        if owner is None or owner.attributes.get("type_kind") == "module":
+            continue  # `obj.name(...)` only reaches methods of a class, not plain functions
+        through = sorted({(n.id, c) for n in facts.nodes if n.kind == NodeKind.METHOD
+                          for c in n.attributes.get("library_calls", [])
+                          if c.rsplit(".", 1)[-1] == name and c.count(".") >= 1})  # fmt: skip
+        if through:
+            first_id, first_call = through[0]
+            notes.append(f"{name}() may also be called through library objects in "
+                         f"{len(through)} place(s), e.g. {first_call} in {_short(first_id)}; "
+                         "those calls aren't followed")  # fmt: skip
     unresolved = sum(len(g.nodes[m].attributes.get("unresolved_calls", [])) for m in reached)
     if unresolved:
         notes.append(f"{unresolved} call(s) in the affected methods couldn't be resolved, so "
@@ -505,7 +526,11 @@ def _size(g: _Graph, reached: dict[str, dict[str, Any]], starts: list[str],
         mapped superclass's columns live in every subclass's table)."""
         cls = g.class_of(d)
         return g.nodes[d].kind == NodeKind.ENTITY or (
-            cls is not None and g.nodes[cls].attributes.get("jpa") is not None
+            cls is not None
+            and (
+                g.nodes[cls].attributes.get("jpa") is not None
+                or g.nodes[cls].attributes.get("orm") is not None
+            )
         )
 
     modules = {module_dir(g.nodes[m].file, g.modules) for m in reached}

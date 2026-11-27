@@ -8,6 +8,7 @@ they are matched as text and their edges are `likely`.
 
 import posixpath
 import re
+import tomllib
 from dataclasses import dataclass, field
 from typing import Any
 from xml.etree.ElementTree import Element
@@ -169,6 +170,36 @@ class BuildIndex:
             "plugins": _GRADLE_PLUGIN.findall(text),
         }, refs))  # fmt: skip
 
+    def pyproject(self, rel: str, text: str) -> None:
+        """PEP 621 `[project]` (or Poetry) name and dependencies; uv workspace members."""
+        data = tomllib.loads(text)
+        directory = _dir(rel)
+        project = data.get("project", {})
+        poetry = data.get("tool", {}).get("poetry", {})
+        raw = list(project.get("dependencies", [])) + [
+            k for k in poetry.get("dependencies", {}) if k != "python"]  # fmt: skip
+        members = data.get("tool", {}).get("uv", {}).get("workspace", {}).get("members", [])
+        refs = [_Ref(EdgeKind.CONTAINS, f"dir:{_join(directory, m)}", Confidence.EXACT, rel,
+                     line_of(text, f'"{m}"')) for m in members if "*" not in m]  # fmt: skip
+        self._add(_Module(directory, rel, "python", line_count(text), {
+            "name": project.get("name") or poetry.get("name") or (
+                posixpath.basename(directory) if directory != "." else "(root)"),
+            "build_tools": ["pyproject"],
+            "modules": [m for m in members if "*" not in m],
+            "dependencies": _python_names(raw),
+            "plugins": [],
+        }, refs))  # fmt: skip
+
+    def requirements(self, rel: str, text: str) -> None:
+        lines = [line.split("#", 1)[0].strip() for line in text.splitlines()]
+        self._add(_Module(_dir(rel), rel, "python", line_count(text), {
+            "name": posixpath.basename(_dir(rel)) if _dir(rel) != "." else "(root)",
+            "build_tools": ["pip"],
+            "modules": [],
+            "dependencies": _python_names([x for x in lines if x and not x.startswith("-")]),
+            "plugins": [],
+        }, []))  # fmt: skip
+
     def _gradle_root(self, directory: str) -> str:
         while directory not in self.gradle_roots and directory != ".":
             directory = _dir(directory)
@@ -202,3 +233,13 @@ class BuildIndex:
                 edges.setdefault(edge_id, Edge(edge_id, node_id, dst, ref.kind, ref.confidence,
                                                ref.file, ref.line, _RESOLVER))  # fmt: skip
         out.edges += edges.values()
+
+
+def _python_names(requirements: list[str]) -> list[str]:
+    """`psycopg[binary]>=3.3` -> `psycopg`: normalised distribution names, in order."""
+    names: list[str] = []
+    for req in requirements:
+        name = re.split(r"[\[<>=!~;@ ]", req.strip(), maxsplit=1)[0].lower().replace("_", "-")
+        if name and name not in names:
+            names.append(name)
+    return names

@@ -54,6 +54,20 @@ _DEPENDENCY_STORES = {
     "spring-boot-starter-amqp": "rabbitmq",
     "spring-kafka": "kafka",
     "spring-boot-starter-data-elasticsearch": "elasticsearch",
+    # Python drivers (pyproject.toml / requirements.txt names)
+    "psycopg": "postgresql",
+    "psycopg2": "postgresql",
+    "psycopg2-binary": "postgresql",
+    "asyncpg": "postgresql",
+    "pymysql": "mysql",
+    "mysqlclient": "mysql",
+    "redis": "redis",
+    "pymongo": "mongodb",
+    "motor": "mongodb",
+    "elasticsearch": "elasticsearch",
+    "pika": "rabbitmq",
+    "kafka-python": "kafka",
+    "confluent-kafka": "kafka",
 }
 _LISTENERS = {"RabbitListener": ("rabbitmq", "queues"), "KafkaListener": ("kafka", "topics"),
               "JmsListener": ("jms", "destination")}  # fmt: skip

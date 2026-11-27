@@ -239,7 +239,7 @@ def test_generated_view_holds_only_real_facts(facts: Extraction, table: FactTabl
     def reply(request: LlmRequest) -> str:
         if request.schema is VIEW_SCHEMA:
             raw = {"sections": [architecture(table, groups=[
-                {"label": "Apps", "style": "solid",
+                {"label": f"Apps [fact:f11 to f45] [fact:{web}]", "style": "solid",
                  "members": [f"fact:{web}", "fact:f999", "fact:service:invented"]}])]}  # fmt: skip
             return json.dumps(raw)
         return FakeProvider().complete(request).text
@@ -260,4 +260,10 @@ def test_generated_view_holds_only_real_facts(facts: Extraction, table: FactTabl
     assert refs and all(r in real for r in refs)
     assert set(view["facts"]) == set(refs)  # every referenced fact is described for the renderer
     assert view["runtime_style"]["value"] in ("microservices", "unclear")  # from the classifier
-    assert {r["ref"] for r in view["removed"]} >= {"fact:f999", "fact:service:invented"}
+    assert {r["ref"] for r in view["removed"]} >= {
+        "fact:f999",
+        "fact:service:invented",
+        "fact:f11 to f45",
+    }  # a range in a label
+    assert "f11 to f45" not in json.dumps(view["sections"])
+    assert "[fact:service:web]" in json.dumps(view["sections"])  # a short id becomes the real one

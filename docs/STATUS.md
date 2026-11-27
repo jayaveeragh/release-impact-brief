@@ -60,10 +60,11 @@ Phase 5 done criterion met: the branch maps for three hand-checked petclinic end
 
 | Step | State |
 |---|---|
-| 1. Java dataset: 37 hand-picked fixes (22 Spring apps, 15 Defects4J) → 26 kept after dropping pull requests and missing issues; ground truth from the fix's diff; dev / held-out by hash | done (next commit) |
-| 2. `rib eval`: issue text only, model picks locations alone, brief, scored | done (next commit) |
-| 3. Results + hand analysis of misses: 18/26 hit (dev 13/16, held-out 5/10) — [eval/java/results.md](../eval/java/results.md) | done (next commit) |
-| 4. Python adapter (FastAPI / Flask / Django, SQLAlchemy / Django models, branches) | not started |
+| 1. Java dataset: 37 hand-picked fixes (22 Spring apps, 15 Defects4J) → 26 kept after dropping pull requests and missing issues; ground truth from the fix's diff; dev / held-out by hash | done (bee52b5) |
+| 2. `rib eval`: issue text only, model picks locations alone, brief, scored | done (bee52b5) |
+| 3. Results + hand analysis of misses: 18/26 hit (dev 13/16, held-out 5/10) — [eval/java/results.md](../eval/java/results.md) | done (bee52b5) |
+| 4. Python adapter: FastAPI / Flask endpoints and inputs, `Depends`, SQLModel / SQLAlchemy models, branches, services, build files (Django later, by decision) | done (next commit; answer keys for full-stack-fastapi-template and microblog match) |
+| 4b. Upper layers on Python: language-neutral ids in summaries / views / module page, branch map from adapter inputs, impact (ORM data, Python test names, calls through library objects) | done (next commit) |
 | 5. BugsInPy evaluation (~10–15 bugs) | not started |
 
 ## Phase 7: Release impact brief (plan approved 2026-11-26)
@@ -104,7 +105,7 @@ Phase 2 done criterion met: both petclinic repos are classified correctly with t
 
 1. Check CI on GitHub → Actions for the latest push.
 2. `.rib/facts.sqlite` rebuilds itself when the schema changes, and `rib` re-extracts every run: no more `rm -rf .rib`.
-3. Next: owner commits Phase 8a (Java evaluation); then Phase 8b, the Python adapter and BugsInPy evaluation.
+3. Next: owner commits Phase 8b part 1 (Python adapter); then part 2, the BugsInPy evaluation (bugs whose fix links a real issue).
 
 Identity check for commits: run `git config user.email` (not `--global`) inside the repo; it must show the jayaveeragh noreply address.
 

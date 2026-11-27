@@ -123,13 +123,13 @@ class FactTable:
         if n.kind == NodeKind.EXTERNAL_SYSTEM:
             return f"(not in this repo: {', '.join(x['value'] for x in a['locations'][:2])})"
         if n.kind == NodeKind.ENTITY:
-            return f"(table {a['table']}; class {a['class'].removeprefix('java:class:')})"
+            return f"(table {a['table']}; class {a['class'].split(':', 2)[-1]})"
         if n.kind == NodeKind.METHOD:
-            return f"({n.id.removeprefix('java:method:')})"
+            return f"({n.id.split(':', 2)[-1]})"
         if n.kind == NodeKind.ENDPOINT:
             directory = module_dir(n.file, self._module_dirs)
             service = self._service_of.get(f"build:module:{directory}")
-            return f"(handler {a['handler'].removeprefix('java:method:')}" + (
+            return f"(handler {a['handler'].split(':', 2)[-1]}" + (
                 f"; service {service})" if service else ")"
             )
         return ""
@@ -291,6 +291,33 @@ def _describe(table: FactTable, real: str) -> dict[str, Any]:
     return {"type": "node", "kind": n.kind, "name": n.name, "file": n.file, "line": n.start_line}
 
 
+def _strip_stray_citations(sections: list[Section], table: FactTable,
+                           removed: list[Section]) -> list[Section]:  # fmt: skip
+    """Narrative bodies are checked citation by citation; any other text (a label, a
+    reason) may still carry `[fact:...]` the model wrote, like `[fact:f11 to f45]`. Keep
+    the ones naming a real fact, cut and log the rest."""
+
+    def walk(value: Any, where: str) -> Any:
+        if isinstance(value, dict):
+            return {k: walk(v, f"{where}.{k}") for k, v in value.items()}
+        if isinstance(value, list):
+            return [walk(v, f"{where}[{i}]") for i, v in enumerate(value)]
+        if isinstance(value, str):
+
+            def cut(match: re.Match[str]) -> str:
+                real = table.aliases.get(match.group(2), match.group(2))
+                if real in table.nodes or real in table.edges:
+                    return f"{match.group(1)}[fact:{real}]"
+                removed.append({"where": where, "ref": f"fact:{match.group(2)}",
+                                "reason": "no such fact"})  # fmt: skip
+                return ""
+
+            return _INLINE.sub(cut, value)
+        return value
+
+    return [walk(s, f"sections[{i}]") for i, s in enumerate(sections)]
+
+
 def generate_view(facts: Extraction, summaries: SummaryResult, repo: str, sha: str,
                   session: LlmSession, cache: SummaryCache) -> dict[str, Any]:  # fmt: skip
     table = FactTable(facts)
@@ -319,6 +346,7 @@ def generate_view(facts: Extraction, summaries: SummaryResult, repo: str, sha: s
         raw = json.loads(response.text)
         cache.put(key, repo, sha, unit, response.model, raw, None)
     sections, removed = validate_view(raw, table)
+    sections = _strip_stray_citations(sections, table, removed)
     referenced = sorted(set(re.findall(r'"fact:([^"\]]+)', json.dumps(sections)))
                         | set(re.findall(r"\[fact:([^\]]+)\]", json.dumps(sections))))  # fmt: skip
     return {

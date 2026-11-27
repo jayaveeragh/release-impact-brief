@@ -12,6 +12,7 @@ requires-python = ">=3.12"
 dependencies = [
     "tree-sitter>=0.25.2,<0.26",  # 0.26.0 segfaults on some Java files, see PROJECT_NOTES.md
     "tree-sitter-java>=0.23.5",
+    "tree-sitter-python>=0.25.0",
     "pyyaml>=6.0.3",  # safe_load / compose only: repo files are untrusted
     "defusedxml>=0.7.1",  # pom.xml is untrusted: no entity expansion
     "anthropic>=2.8.0",

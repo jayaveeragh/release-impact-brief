@@ -41,7 +41,7 @@ export function EndpointPage({ name, endpoint }: { name: string; endpoint: strin
         <section className="note-box">
           {Object.entries(map.validation).map(([input, fields]) => (
             <p key={input}><strong>validation:{input}</strong> checks {fields.length > 0
-              ? fields.join(", ") : "no annotated fields"} (from validation annotations).</p>))}
+              ? fields.join(", ") : "no fields with constraints"} (from the fields' declared constraints).</p>))}
           {map.custom_validator && <p>A custom validator, <strong>{map.custom_validator}</strong>, is
             installed with <code>@InitBinder</code>; the fields it checks are not traced.</p>}
         </section>
@@ -104,7 +104,7 @@ export function EndpointPage({ name, endpoint }: { name: string; endpoint: strin
             <td><code>{row.name}</code>{row.implicit && <span className="tag">implicit</span>}</td>
             <td><code>{row.type}</code></td>
             <td>{row.source}</td>
-            <td>{(row.constraints ?? []).join(", ")}{row.validated && "@Valid"}</td>
+            <td>{(row.constraints ?? []).join(", ")}{row.validated && "validated"}</td>
             <td><RoleBadge row={row} /></td>
             <td>{row.lines.map((l) => <L key={l} line={l} />)}</td>
           </tr>))}</tbody>

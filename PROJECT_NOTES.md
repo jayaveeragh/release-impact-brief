@@ -41,6 +41,8 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 - 2026-11-01 — Fetch limits (20,000 files, 200 MB, 1 MB per file, 120 s) are about 100x the test repos — arbitrary, never measured beyond these two repos — active
 - 2026-11-26 — Java evaluation, `ollama:qwen3:14b`, 26 cases, issue text only: hit 18/26 (dev 13/16, held-out 5/10; Defects4J 11/14, Spring apps 7/12), class hit 21/26, model picks a changed method 15/26, mean 2.6% (median 1.9%) of main methods marked high, test recall 0.62 over 15 cases with changed tests (1.0 on 7 of 8 hits) — measured with `rib eval eval/java/dataset.json` — active
 - 2026-11-26 — Evaluation run time: 13–22 s per case cold (fetch + analyse + one model call), ~8 min for 26; a re-run with cached answers ~1 min — measured from `rib eval` output — active
+- 2026-11-26 — Python adapter on full-stack-fastapi-template @ `f8c6c14`: 45 .py files, 0 parse errors, 23 endpoints (= 23 route decorators by grep), 2 tables, 2 relations, 203 calls all exact, 4 unresolved; microblog @ `a975ef6`: 35 files, 35 endpoints (30 decorators, GET+POST ones split), 5 tables, 12 relations, calls 32 exact / 17 likely / 4 guess, 14 unresolved, 534 library — measured with `analyze()`; the counts match the hand-written keys in tests/fixtures — active
+- 2026-11-26 — microblog `rib view` with `ollama:qwen3:14b`: 12 min cold (35 module units + modules + repo + view); impact candidates 13 s, brief 20 s in the web app — measured with `time rib view` and the browser script — active
 
 ## Trade-offs and known gaps
 
@@ -69,6 +71,8 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 - 2026-11-01 — Tree-sitter over a full Java type resolver (e.g. JavaParser symbol solver) — the resolver is more accurate but needs a JVM; the brief puts compiler-based indexing after V1 — active
 - 2026-11-26 — Impact goes up to callers only, never down to callees: a bug seen at an entry point (`Jsoup.parse`) but fixed below it (`Document#normalise`) is missed (Jsoup-1). Following callees too would grow the high set; not changed without the owner deciding — active
 - 2026-11-26 — Location picking is the weak step: 3 of 8 misses are a plausible neighbour or the right class with the wrong method, 2 have issue text that names nothing in the code — see eval/java/results.md — active
+- 2026-11-26 — Python: reads of a changed field (`post.body`) are not traced in the impact brief: Java finds them through getters, Python reads attributes on values whose type is usually unknown, so matching `x.body` anywhere would flood the brief. Not handled — active
+- 2026-11-26 — The FastAPI template's root pyproject.toml is a uv workspace holding `backend`, so the layout is "multi-module" and the runtime "modular monolith", the same rule as a Maven parent with one child; arguably a monolith — kept for consistency, not changed — active
 
 ## Surprises
 
@@ -91,6 +95,12 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 - 2026-11-26 — 11 of 37 picked cases cite a pull request, not an issue (start.spring.io and the petclinics often close PRs directly), so they were dropped — found while building the dataset — active
 - 2026-11-26 — The system Python's urllib had no root certificates (CERTIFICATE_VERIFY_FAILED); the dataset script uses httpx from the venv — active
 - 2026-11-26 — git's background gc/maintenance kept writing into the temp folder while it was deleted; diff fetches run with `gc.auto=0` and `maintenance.auto=false` — active
+- 2026-11-26 — tree-sitter-python 0.25.0 parses Python 3.14's unparenthesised `except A, B:` (the FastAPI template uses it); nothing needed — active
+- 2026-11-26 — First Python routing run found no Flask endpoints and no router prefixes: looking up `bp` / `items.router` resolved the variable to what it holds (a library `Blueprint()` value) instead of the variable itself. A separate "which variable is this" lookup fixed both, and `settings.API_V1_STR` with it — fixed
+- 2026-11-26 — Counting any method call on an input as "passed through" broke the petclinic branch key (`item.getCode()` would make `item` passed through); getters are excluded — fixed
+- 2026-11-26 — microblog's routes call `current_user.follow(...)`; `current_user` is Flask-Login's proxy, so `User.follow` looks uncalled and its endpoints aren't reached. Now named in "couldn't see" — active gap
+- 2026-11-26 — The first real Python view crashed: the local model wrote a range citation `[fact:f11 to f45]` inside a *label* of the not-settled list; only narrative bodies were citation-checked, but every `[fact:...]` anywhere was looked up. Now stray citations anywhere are cut and logged (short ids mapped to real ones); test added — fixed
+- 2026-11-26 — Large flat Flask apps draw badly on the overview: the model put all 35 endpoints in one group, so ELK lays out a very tall column and the fitted diagram is tiny. Not Python-specific (any repo with many endpoints) and not fixed in this commit — active gap
 
 ## Dead ends
 

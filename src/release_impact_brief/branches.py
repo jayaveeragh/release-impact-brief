@@ -16,6 +16,7 @@ Built on demand from the handler's `flow` (adapters/java_flow.py) and the facts:
 Spring's custom validators (`@InitBinder` + setValidator) are named, not traced.
 """
 
+import re
 from collections.abc import Iterable
 from typing import Any
 
@@ -27,8 +28,11 @@ _CONSTRAINTS = {"NotBlank", "NotNull", "NotEmpty", "Size", "Pattern", "Min", "Ma
                 "PositiveOrZero", "Negative", "NegativeOrZero", "Digits", "DecimalMin",
                 "DecimalMax", "AssertTrue", "AssertFalse", "Valid"}  # fmt: skip
 _BINDING = {"BindingResult", "Errors"}
+_PYDANTIC_LIMITS = {"min_length", "max_length", "gt", "ge", "lt", "le", "pattern",
+                    "max_digits", "decimal_places", "multiple_of"}  # fmt: skip
 _ERROR_CHECKS = {"hasErrors", "hasFieldErrors", "hasGlobalErrors", "getErrorCount"}
 _VALIDATION = "\x00validation"  # marker while resolving; replaced by validation:<input>
+_FORM_CHECKS = {"validate_on_submit", "validate"}
 
 
 def _base(type_text: str) -> str:
@@ -51,7 +55,7 @@ class _Facts:
             if e.kind == EdgeKind.CONTAINS and e.dst in self.nodes:
                 self.children.setdefault(e.src, []).append(self.nodes[e.dst])
                 self.parent[e.dst] = e.src
-            elif e.kind == EdgeKind.EXTENDS and e.src.startswith("java:class:"):
+            elif e.kind == EdgeKind.EXTENDS and ":class:" in e.src:
                 self.superclass.setdefault(e.src, e.dst)
         for n in self.nodes.values():
             if n.kind == NodeKind.CLASS:
@@ -108,19 +112,35 @@ def branch_map(nodes: Iterable[Node], edges: Iterable[Edge], endpoint_id: str) -
     # Request inputs, by parameter name (the request may know them by another name).
     inputs: dict[str, dict[str, Any]] = {}
     classes: dict[str, Node] = {}
-    for p in params:
-        if (described := describe_input(p)) is not None:
-            inputs[p["name"]] = described
-            if (cls := facts.class_of_type(p["type"], controller)) is not None:
-                classes[p["name"]] = cls
-    binding = {p["name"] for p in params if _base(p["type"]) in _BINDING}
-    valid = [p["name"] for p in params if {"Valid", "Validated"} & set(p["annotations"])
-             and p["name"] in inputs]  # fmt: skip
+    if handler.language == "python":
+        # Python inputs are found by the adapter: parameters, `request.args[...]` reads
+        # (keyed by their request ref) and form objects made in the handler.
+        for entry in endpoint.attributes["inputs"]:
+            key = entry.get("param") or entry.get("ref") or entry["name"]
+            inputs[key] = {k: v for k, v in entry.items() if k not in ("param", "ref", "class")}
+            cls = facts.nodes.get(entry.get("class", "")) or (
+                facts.class_of_type(entry["type"], controller) if entry["source"] in (
+                    "body", "form") else None)  # fmt: skip
+            if cls is not None:
+                classes[key] = cls
+        binding: set[str] = set()
+        valid = [k for k, e in inputs.items() if e.get("validated") and k in classes]
+    else:
+        for p in params:
+            if (described := describe_input(p)) is not None:
+                inputs[p["name"]] = described
+                if (cls := facts.class_of_type(p["type"], controller)) is not None:
+                    classes[p["name"]] = cls
+        binding = {p["name"] for p in params if _base(p["type"]) in _BINDING}
+        valid = [p["name"] for p in params if {"Valid", "Validated"} & set(p["annotations"])
+                 and p["name"] in inputs]  # fmt: skip
     field_names = {name: {f.name for f in facts.fields(cls)} for name, cls in classes.items()}
 
     local_deps: dict[str, set[str]] = {}
 
     def resolve(ref: str) -> set[str]:
+        if ref.startswith("request:"):  # Flask: request.args["page"] -> the `page` input
+            return {inputs[ref]["name"]} if ref in inputs else set()
         head, dot, rest = ref.partition(".")
         if head in binding:
             return {_VALIDATION} if rest.split("(")[0] in _ERROR_CHECKS else set()
@@ -129,6 +149,10 @@ def branch_map(nodes: Iterable[Node], edges: Iterable[Edge], endpoint_id: str) -
             if not dot:
                 return {name}
             method = rest.split("(")[0]
+            if "(" not in rest:  # an attribute: user_in.email
+                return {f"{name}.{rest}"}
+            if method in _FORM_CHECKS and head in valid:
+                return {f"validation:{name}"}  # WTForms: did the form pass its validators
             if rest.endswith("(...)"):
                 return {name}  # a call with arguments on the object: depends on all of it
             prop = _property(method, field_names.get(head, set()))
@@ -176,11 +200,16 @@ def branch_map(nodes: Iterable[Node], edges: Iterable[Edge], endpoint_id: str) -
     for name in valid:
         if name in classes:
             validation[inputs[name]["name"]] = sorted(
-                f.name for f in facts.fields(classes[name])
-                if _CONSTRAINTS & set(f.attributes["annotations"]))  # fmt: skip
+                f.name for f in facts.fields(classes[name]) if _constraints(f)
+            )
 
     all_drivers = {d for b in out_branches for d in b["drivers"]}
-    passed = {ref.split(".")[0] for c in flow["calls"] for ref in c["reads"]}
+    # handed to other code: an argument of a call, or the object a non-getter method is
+    # called on (`item_in.model_dump()` hands its data on; `item.getCode()` only reads it)
+    passed = {ref.split(".")[0] for c in flow["calls"] for ref in c["reads"]} | {
+        head for c in flow["calls"] if "." in c["callee"]
+        for head, method in [c["callee"].split(".")[:2]]
+        if not re.match(r"(get|is|has)[A-Z_]", method)}  # fmt: skip
     rows = []
     for param_name, described in inputs.items():
         name = described["name"]
@@ -216,7 +245,7 @@ def branch_map(nodes: Iterable[Node], edges: Iterable[Edge], endpoint_id: str) -
                         "field": f.name,
                         "file": f.file,
                         "line": f.start_line,
-                        "constraints": sorted(_CONSTRAINTS & set(f.attributes["annotations"])),
+                        "constraints": _constraints(f),
                         "role": field_role,
                         "lines": field_lines or (whole_lines if not drives else []),
                     }
@@ -238,6 +267,20 @@ def branch_map(nodes: Iterable[Node], edges: Iterable[Edge], endpoint_id: str) -
         "library_calls": handler.attributes.get("library_calls", []),
         "unresolved_calls": handler.attributes.get("unresolved_calls", []),
     }
+
+
+def _constraints(field: Node) -> list[str]:
+    """Bean Validation annotations (Java), or the validators of a WTForms field
+    (`StringField(..., validators=[DataRequired(), Length(max=64)])`) / the limits of a
+    Pydantic `Field(min_length=...)` (Python)."""
+    if field.language != "python":
+        return sorted(_CONSTRAINTS & set(field.attributes["annotations"]))
+    kwargs = field.attributes.get("call_kwargs", {})
+    if "validators" in kwargs:
+        return sorted(set(re.findall(r"(\w+)\(", kwargs["validators"])))
+    if (field.attributes.get("call") or "").rsplit(".", 1)[-1] == "Field":
+        return sorted(k for k in kwargs if k in _PYDANTIC_LIMITS)
+    return []
 
 
 def _custom_validator(facts: _Facts, controller: str) -> str | None:

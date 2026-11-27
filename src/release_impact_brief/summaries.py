@@ -86,8 +86,8 @@ def _short(node_id: str) -> str:
 
 
 def _class_of(method_id: str) -> str:
-    """`java:method:a.B#m(int)` -> `java:class:a.B`."""
-    return "java:class:" + method_id.removeprefix("java:method:").split("#", 1)[0]
+    """`java:method:a.B#m(int)` -> `java:class:a.B` (same for python: ids)."""
+    return method_id.replace(":method:", ":class:", 1).split("#", 1)[0]
 
 
 def _limited(items: list[str]) -> list[str]:
@@ -222,6 +222,8 @@ class Summarizer:
                 lines.append(f"{label}: " + ", ".join(a[label]))
         if a.get("jpa"):
             lines.append(f"JPA: {a['jpa']}")
+        if a.get("orm"):
+            lines.append(f"ORM model: {a['orm']}")
         for kind, dst in self.out_edges.get(cls.id, []):
             if kind == EdgeKind.MAPS:
                 lines.append(f"entity table: {self.nodes[dst].name}")

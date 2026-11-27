@@ -1,0 +1,269 @@
+{
+  "written": "2026-11-26. BugsInPy bugs hand-picked from eval/python/find_candidates.py output: the fix commit names an issue as 'Fix #N' or as the first of two numbers (the second is usually the PR); at most 3 per project; pandas, ansible, matplotlib and youtube-dl left out (too big for the local model, or malformed bug files)",
+  "cases": [
+    {
+      "id": "bugsinpy-PySnooper-1",
+      "source": "bugsinpy",
+      "repo": "cool-RR/PySnooper",
+      "pre_fix": "e21a31162f4c54be693d8ca8260e42393b39abd3",
+      "fix": "56f22f8ffe1c6b2be4d2cf3ad1987fdb66113da2",
+      "issue": {
+        "github": "cool-RR/PySnooper",
+        "number": 124
+      },
+      "subject": "Fix unicode issues and add test, fix #124"
+    },
+    {
+      "id": "bugsinpy-PySnooper-2",
+      "source": "bugsinpy",
+      "repo": "cool-RR/PySnooper",
+      "pre_fix": "e21a31162f4c54be693d8ca8260e42393b39abd3",
+      "fix": "814abc34a098c1b98cb327105ac396f985d2413e",
+      "issue": {
+        "github": "cool-RR/PySnooper",
+        "number": 144
+      },
+      "subject": "Support single tuple to `custom_repr`, fix #144"
+    },
+    {
+      "id": "bugsinpy-httpie-1",
+      "source": "bugsinpy",
+      "repo": "jakubroztocil/httpie",
+      "pre_fix": "001bda19450ad85c91345eea3cfa3991e1d492ba",
+      "fix": "5300b0b490b8db48fac30b5e32164be93dc574b7",
+      "issue": {
+        "github": "jakubroztocil/httpie",
+        "number": 451
+      },
+      "subject": "Fixed #451 - OSError: [Errno 36] File name too long"
+    },
+    {
+      "id": "bugsinpy-thefuck-1",
+      "source": "bugsinpy",
+      "repo": "nvbn/thefuck",
+      "pre_fix": "2ced7a7f33ae0bec3ffc7a43ce95330bdf6cfcb9",
+      "fix": "444908ce1c17767ef4aaf9e0b4950497914f7f63",
+      "issue": {
+        "github": "nvbn/thefuck",
+        "number": 1047
+      },
+      "subject": "#1047: Fix pip_unknown_command by using a less restrictive regex"
+    },
+    {
+      "id": "bugsinpy-thefuck-2",
+      "source": "bugsinpy",
+      "repo": "nvbn/thefuck",
+      "pre_fix": "40ab4eb62db57627bff10cf029d29c94704086a2",
+      "fix": "78ef9eec88f43d5727986be2237f6e0e250cbbbc",
+      "issue": {
+        "github": "nvbn/thefuck",
+        "number": 902
+      },
+      "subject": "#902: Use `os.pathsep` to split PATH env var (#917)"
+    },
+    {
+      "id": "bugsinpy-thefuck-6",
+      "source": "bugsinpy",
+      "repo": "nvbn/thefuck",
+      "pre_fix": "797ca1c5647c565f62e21a8e29515c8b0fbe275f",
+      "fix": "7c858fadb3458be829d3d43666ccb46c3ed5b8a0",
+      "issue": {
+        "github": "nvbn/thefuck",
+        "number": 762
+      },
+      "subject": "#762: handle single quotes in git_branch_exists"
+    },
+    {
+      "id": "bugsinpy-luigi-28",
+      "source": "bugsinpy",
+      "repo": "spotify/luigi",
+      "pre_fix": "e37cb0ea1d97e6340840128a68c8d59bd05c28c3",
+      "fix": "e2be971226c34a193d7029c51206e488b6a037cd",
+      "issue": {
+        "github": "spotify/luigi",
+        "number": 896
+      },
+      "subject": "Fix #896: make table_exists case insensitive"
+    },
+    {
+      "id": "bugsinpy-luigi-3",
+      "source": "bugsinpy",
+      "repo": "spotify/luigi",
+      "pre_fix": "a0f1db01ddab5b4b2bda3fbe58bad09a6d94a7b4",
+      "fix": "3a0bfbff69addfb3be1107adab3d4914bcae3e4b",
+      "issue": {
+        "github": "spotify/luigi",
+        "number": 2609
+      },
+      "subject": "Fix parsing for TupleParameter (#2619)"
+    },
+    {
+      "id": "bugsinpy-luigi-5",
+      "source": "bugsinpy",
+      "repo": "spotify/luigi",
+      "pre_fix": "45b5711d1900184ccd66c65216d28c0d69d10d4a",
+      "fix": "1fbec18ceb7c5de352e6d1df12960c61f09e67c2",
+      "issue": {
+        "github": "spotify/luigi",
+        "number": 2054
+      },
+      "subject": "Fix MRO on tasks using util.requires (#2307)"
+    },
+    {
+      "id": "bugsinpy-sanic-3",
+      "source": "bugsinpy",
+      "repo": "huge-success/sanic",
+      "pre_fix": "91f6abaa81248189fbcbdf685e8bdcbb7846609f",
+      "fix": "861e87347a2d373d6ffa387965a6887c83af632c",
+      "issue": {
+        "github": "huge-success/sanic",
+        "number": 1788
+      },
+      "subject": "Fix #1788 incorrect url_for for routes with hosts, added tests. (#1789)"
+    },
+    {
+      "id": "bugsinpy-sanic-2",
+      "source": "bugsinpy",
+      "repo": "huge-success/sanic",
+      "pre_fix": "ba9b432993019b0af0c4827a5ed42aaa091bd17d",
+      "fix": "801595e24acdf8050b8d3ffa512d424147848d32",
+      "issue": {
+        "github": "huge-success/sanic",
+        "number": 1754
+      },
+      "subject": "Add server.start_serving and server.serve_forever to AsyncioServer proxy object, to match asyncio-python3.7 example doc, fixes #1754 (#1762)"
+    },
+    {
+      "id": "bugsinpy-tornado-4",
+      "source": "bugsinpy",
+      "repo": "tornadoweb/tornado",
+      "pre_fix": "a8420fc681c5423d072978f00eab4d0645057d16",
+      "fix": "db529031a1e1a6e951826aba0b7d0b18f05cd4c7",
+      "issue": {
+        "github": "tornadoweb/tornado",
+        "number": 2521
+      },
+      "subject": "Fix #2521: Serve full file when range start is negative and exceeds the total length (#2522)"
+    },
+    {
+      "id": "bugsinpy-fastapi-9",
+      "source": "bugsinpy",
+      "repo": "tiangolo/fastapi",
+      "pre_fix": "a7a92bc63768ccee3f3afc2b73b2c581928dfe75",
+      "fix": "c5817912d2be25bb310bf9da517882f57bbe7bb5",
+      "issue": {
+        "github": "tiangolo/fastapi",
+        "number": 431
+      },
+      "subject": ":bug: use media_type from Body params for OpenAPI requestBody (Fixes: #431) (#439)"
+    },
+    {
+      "id": "bugsinpy-fastapi-14",
+      "source": "bugsinpy",
+      "repo": "tiangolo/fastapi",
+      "pre_fix": "2ddb804940bbcad4ed730b2a910c8fd3c1167127",
+      "fix": "b7d184363fad5f6b55d15ec3a3a844aa81092bbd",
+      "issue": {
+        "github": "tiangolo/fastapi",
+        "number": 87
+      },
+      "subject": ":bug: Fix JSON Schema of additional properties (#121)"
+    },
+    {
+      "id": "bugsinpy-black-10",
+      "source": "bugsinpy",
+      "repo": "psf/black",
+      "pre_fix": "f6643c4f0cfbae1f2493fdfce46cfbae3d26f46b",
+      "fix": "66aa676278948368dff251dffd58c850cb8b889e",
+      "issue": {
+        "github": "psf/black",
+        "number": 262
+      },
+      "subject": "Fix indent calculation with tabs when computing prefixes (#595)"
+    },
+    {
+      "id": "bugsinpy-black-13",
+      "source": "bugsinpy",
+      "repo": "psf/black",
+      "pre_fix": "b719d85ccc330170e40b2617307a7e3b2a0bab14",
+      "fix": "883689366ce0f0e0ddd66d81360c61abfd19b01a",
+      "issue": {
+        "github": "psf/black",
+        "number": 125
+      },
+      "subject": "Support parsing of async generators in non-async functions (#165)"
+    },
+    {
+      "id": "bugsinpy-black-19",
+      "source": "bugsinpy",
+      "repo": "psf/black",
+      "pre_fix": "337a4199f90ca48a19cf26511e0cec330b13bd4e",
+      "fix": "29e97d1d4a7717f1bd0ca35cacf2f2ce6d815b0c",
+      "issue": {
+        "github": "psf/black",
+        "number": 154
+      },
+      "subject": "[#154] Handle comments between decorators properly (#166)"
+    },
+    {
+      "id": "bugsinpy-scrapy-37",
+      "source": "bugsinpy",
+      "repo": "scrapy/scrapy",
+      "pre_fix": "1d5c270ce8caf954ce83c8db262e2a35707e0c5e",
+      "fix": "f701f5b0db10faef08e4ed9a21b98fd72f9cfc9a",
+      "issue": {
+        "github": "scrapy/scrapy",
+        "number": 2552
+      },
+      "subject": "fix #2552 by improving request schema check on its initialization"
+    },
+    {
+      "id": "bugsinpy-scrapy-5",
+      "source": "bugsinpy",
+      "repo": "scrapy/scrapy",
+      "pre_fix": "426da0ed07637e7efbcfb0fe49546e187d5d7f67",
+      "fix": "acd2b8d43b5ebec7ffd364b6f335427041a0b98d",
+      "issue": {
+        "github": "scrapy/scrapy",
+        "number": 3128
+      },
+      "subject": "[MRG+1] Fix part of issue #3128 - None should not be a valid type for 'url' in Response.follow (#3131)"
+    },
+    {
+      "id": "bugsinpy-spacy-3",
+      "source": "bugsinpy",
+      "repo": "explosion/spaCy",
+      "pre_fix": "dac70f29eb3b1f21ae9e2c6346666bf6a46307b6",
+      "fix": "663333c3b2bad90915d1a48a626ca1275b7ef077",
+      "issue": {
+        "github": "explosion/spaCy",
+        "number": 5413
+      },
+      "subject": "Fixes  #5413 (#5315)"
+    },
+    {
+      "id": "bugsinpy-keras-13",
+      "source": "bugsinpy",
+      "repo": "keras-team/keras",
+      "pre_fix": "2bfd1f2c950df5fc3f40b903c1966f1b0a48bee4",
+      "fix": "a07253d8269e1b750f0a64767cc9a07da8a3b7ea",
+      "issue": {
+        "github": "keras-team/keras",
+        "number": 10855
+      },
+      "subject": "Fix `fit_generator` for `workers=0` (#11285)"
+    },
+    {
+      "id": "bugsinpy-keras-33",
+      "source": "bugsinpy",
+      "repo": "keras-team/keras",
+      "pre_fix": "1c9a49781da2101507db23e2014e4e5d16bd2e52",
+      "fix": "70ad0d6e4a569701ef106058397ad0540ec08340",
+      "issue": {
+        "github": "keras-team/keras",
+        "number": 9538
+      },
+      "subject": "Correct tokenization with multi-character `split` (#9585)"
+    }
+  ]
+}

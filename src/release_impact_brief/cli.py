@@ -230,14 +230,14 @@ def _eval(args: argparse.Namespace) -> int:
     args.db.parent.mkdir(parents=True, exist_ok=True)
     cache = SummaryCache(args.db)
     try:
-        report = run(args.dataset, args.out, session, cache, args.only)
+        report = run(args.dataset, args.out or args.dataset.parent, session, cache, args.only)
     except (LlmAuthError, LlmUnavailable) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
     finally:
         cache.close()
     print(json.dumps(report["summary"], indent=2))
-    print(f"results: {args.out / 'results.json'}")
+    print(f"results: {(args.out or args.dataset.parent) / 'results.json'}")
     return 0
 
 
@@ -292,7 +292,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     evaluate = sub.add_parser("eval", help="replay real bug fixes and score the impact brief")
     evaluate.add_argument("dataset", type=Path, help="e.g. eval/java/dataset.json")
-    evaluate.add_argument("--out", type=Path, default=Path("eval/java"), help="results folder")
+    evaluate.add_argument("--out", type=Path, help="results folder (default: the dataset's)")
     evaluate.add_argument("--only", help="run one case id")
     evaluate.add_argument("--db", type=Path, default=Path(".rib/facts.sqlite"), help="answer cache")
     evaluate.set_defaults(func=_eval)

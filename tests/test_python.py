@@ -320,3 +320,32 @@ def test_calls_through_library_objects_are_named_in_the_brief(tmp_path: Path) ->
     notes = [n for n in brief["couldnt_see"] if "through library objects" in n]
     # once, and only for the class method: a plain function can't be reached as obj.follow()
     assert len(notes) == 1 and "flask_login.current_user.follow in routes#follow(name)" in notes[0]
+
+
+def test_locals_made_from_each_other_dont_loop(tmp_path: Path) -> None:
+    facts = build(tmp_path, {  # a = b(); b = a() sent name lookup round in a circle
+        "a.py": "def run():\n    a = b()\n    b = a()\n    a.go()\n",
+    })  # fmt: skip
+    assert node(facts, "python:method:a#run()")["unresolved_calls"]
+
+
+def test_modules_re_exporting_from_each_other_dont_loop(tmp_path: Path) -> None:
+    facts = build(tmp_path, {
+        "a.py": "from b import X\n",
+        "b.py": "from a import X\n",
+        "c.py": "import a\n\ndef run():\n    a.X()\n",
+    })  # fmt: skip
+    assert node(facts, "python:method:c#run()")
+
+
+def test_python_tests_are_left_out_of_the_bug_shortlist(tmp_path: Path) -> None:
+    from release_impact_brief.chat import rank_facts
+
+    facts = build(tmp_path, {
+        "app/rules.py": "def match_branch(command):\n    pass\n",
+        "tests/test_rules.py": "def test_match_branch():\n    pass\n",
+    })  # fmt: skip
+    view = {"panels": {"modules": []}, "sections": []}
+    ranked = [i for i, _ in rank_facts(facts, view, "match branch fails")]
+    assert "python:method:app.rules#match_branch(command)" in ranked
+    assert not [i for i in ranked if "test_rules" in i]

@@ -10,7 +10,8 @@ For each case:
 Nothing from the repos is run; both commits are fetched shallow with the locked-down
 git settings every fetch uses.
 
-    .venv/bin/python eval/java/build_dataset.py
+    .venv/bin/python eval/java/build_dataset.py              # Java
+    .venv/bin/python eval/java/build_dataset.py eval/python  # Python: same steps, *.py files
 """
 
 import hashlib
@@ -30,7 +31,8 @@ from release_impact_brief.fetch import _git_env, fetch_repo
 from release_impact_brief.pipeline import analyze
 from release_impact_brief.system import is_test
 
-HERE = Path(__file__).parent
+HERE = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent
+SOURCES = "*.py" if HERE.name == "python" else "*.java"
 _HUNK = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+\d+(?:,\d+)? @@")
 
 
@@ -77,7 +79,7 @@ def _issue_text(issue: dict[str, Any], client: httpx.Client) -> str | None:
 
 
 def changed_lines(repo: str, pre: str, fix: str) -> dict[str, list[tuple[int, int]]]:
-    """Pre-fix side of the fix's Java diff: file -> [(first line, count)]; count 0 = insertion."""
+    """Pre-fix side of the fix's source diff: file -> [(first line, count)]; count 0 = insertion."""
     with tempfile.TemporaryDirectory(prefix="rib-diff-") as tmp:
 
         def git(*args: str) -> str:
@@ -90,7 +92,7 @@ def changed_lines(repo: str, pre: str, fix: str) -> dict[str, list[tuple[int, in
         git("init", "--quiet")
         for sha in (pre, fix):
             git("fetch", "--quiet", "--depth", "1", f"https://github.com/{repo}.git", sha)
-        diff = git("diff", "-U0", pre, fix, "--", "*.java")
+        diff = git("diff", "-U0", pre, fix, "--", SOURCES)
     hunks: dict[str, list[tuple[int, int]]] = {}
     current = None
     for line in diff.splitlines():
@@ -130,7 +132,10 @@ def ground_truth(case: dict[str, Any]) -> dict[str, Any]:
 def main() -> None:
     cases = json.loads((HERE / "cases.json").read_text())["cases"]
     kept, dropped = [], []
-    with httpx.Client(timeout=30, headers={"User-Agent": "release-impact-brief-eval"}) as client:
+    # renamed repos (tiangolo/fastapi -> fastapi/fastapi) answer with a redirect
+    with httpx.Client(
+        timeout=30, follow_redirects=True, headers={"User-Agent": "release-impact-brief-eval"}
+    ) as client:
         for case in cases:
             text = issue_text(case["issue"], client)
             if text is None:
@@ -139,15 +144,15 @@ def main() -> None:
                 continue
             truth = ground_truth(case)
             if not truth["changed_methods"] and not truth["changed_classes"]:
-                dropped.append({"id": case["id"], "reason": "the fix changes no main Java code"})
-                print(f"drop {case['id']}: no main Java change", flush=True)
+                dropped.append({"id": case["id"], "reason": "the fix changes no main code"})
+                print(f"drop {case['id']}: no main code change", flush=True)
                 continue
             kept.append(case | {"issue_text": text, "group": group(case["id"])} | truth)
             print(f"keep {case['id']} ({kept[-1]['group']}): {len(truth['changed_methods'])} "
                   f"methods, {len(truth['changed_classes'])} classes, "
                   f"{len(truth['changed_tests'])} tests", flush=True)  # fmt: skip
     (HERE / "dataset.json").write_text(json.dumps(
-        {"built": "by eval/java/build_dataset.py from cases.json", "cases": kept,
+        {"built": f"by eval/java/build_dataset.py from eval/{HERE.name}/cases.json", "cases": kept,
          "dropped": dropped}, indent=2) + "\n")  # fmt: skip
     print(f"{len(kept)} cases kept, {len(dropped)} dropped", file=sys.stderr)
 

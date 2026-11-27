@@ -25,7 +25,7 @@ from release_impact_brief.clones import read_lines
 from release_impact_brief.facts import EdgeKind, Node, NodeKind
 from release_impact_brief.llm import LlmRequest, LlmSession
 from release_impact_brief.summaries import SummaryCache, Unit, fence
-from release_impact_brief.system import module_dir
+from release_impact_brief.system import is_test, module_dir
 
 CHAT_SYSTEM = (
     "You answer questions about one code repository for engineers trying to understand it. "
@@ -140,7 +140,7 @@ def _scores(ix: "_Index", facts: Extraction, text: str) -> dict[str, float]:
     wanted = _question_terms(text)
     scores: dict[str, float] = {}
     for n in facts.nodes:
-        if n.kind not in _SEARCHED or "/src/test/" in f"/{n.file}":
+        if n.kind not in _SEARCHED or is_test(n.file):
             continue
         own, summary = ix.text(n)
         score = len(wanted & _terms(own)) + 0.3 * len(wanted & _terms(summary))

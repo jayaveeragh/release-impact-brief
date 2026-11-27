@@ -84,6 +84,7 @@ class PythonResolver:
         self.bases: dict[str, list[tuple[str, Confidence]]] = {}
         self.edges: dict[str, Edge] = {}
         self._module_cache: dict[tuple[str, str], str | None] = {}
+        self._re_exports: set[tuple[str, str]] = set()  # being followed now (cycle guard)
 
     # ---- modules and names -------------------------------------------------
 
@@ -217,8 +218,14 @@ class PythonResolver:
             if submodule is not None:
                 return Target("module", submodule, target.confidence)
             alias = self.nodes[target.ref].attributes.get("aliases", {}).get(attr)
-            if alias is not None:  # re-exported: `from .models import User` in __init__
-                found = self.resolve_dotted(alias, target.ref)
+            if alias is not None and (target.ref, attr) not in self._re_exports:
+                # re-exported: `from .models import User` in __init__; a.py and b.py
+                # importing X from each other would otherwise go round forever
+                self._re_exports.add((target.ref, attr))
+                try:
+                    found = self.resolve_dotted(alias, target.ref)
+                finally:
+                    self._re_exports.discard((target.ref, attr))
                 return Target(found.kind, found.ref, weakest(found.confidence, target.confidence))
             return None
         if target.kind in ("node", "instance") and self.nodes[target.ref].kind == NodeKind.CLASS:
@@ -301,8 +308,9 @@ class PythonResolver:
                     target = self.resolve_name(name, module_id)
                 elif local.startswith("\x01"):  # self / cls
                     target = Target("instance" if local[1] == "i" else "node", local[2:])
-                elif local.startswith("()"):
-                    target = self.expr(local[2:], module_id, scope if local[2:] != token else {})
+                elif local.startswith("()"):  # without itself: `a = b(); b = a()` would loop
+                    rest = {k: v for k, v in scope.items() if k != name}
+                    target = self.expr(local[2:], module_id, rest)
                 else:
                     target = self.type_target(local, module_id)
             elif target is not None:

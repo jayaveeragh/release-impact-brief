@@ -8,6 +8,7 @@ build the brief, and compare with the ground truth from the real fix:
   that changes no method: a method of a class it changed);
   class hit: it contains a method of a class the fix changed;
 - located: the model's picks include a changed method (or one of its classes);
+- shortlisted: the search's shortlist the model picks from held it;
 - coverage: methods in the high set / main-code methods (smaller is more useful);
 - test recall: tests the fix touched that the brief lists, if the fix touched any.
 No summaries are made (faster; and the harder setting for location picking).
@@ -65,7 +66,11 @@ def run_case(case: dict[str, Any], session: LlmSession, cache: SummaryCache) -> 
     picked_classes = {_class_of(m) for m in picked_methods} | {
         loc for loc in locations if nodes[loc].kind == NodeKind.CLASS
     }
-    listed_tests = {t["label"] for t in brief["tests"]}
+    # by name, or by file: a Python test can be a function in test_x.py (Java: the same)
+    listed = {c["id"] for c in picked["shortlist"]}
+    listed_tests = {t["label"] for t in brief["tests"]} | {
+        Path(t["file"]).stem for t in brief["tests"] if t["file"]
+    }
     changed_tests = set(case["changed_tests"])
     main_methods = sum(1 for n in facts.nodes if n.kind == NodeKind.METHOD and not is_test(n.file))
     return {
@@ -76,6 +81,10 @@ def run_case(case: dict[str, Any], session: LlmSession, cache: SummaryCache) -> 
         "located": bool(changed & picked_methods)
         if changed else bool(changed_classes & picked_classes),
         "located_class": bool(changed_classes & picked_classes),
+        # search found it (the model could have picked it): a changed method, or for a fix
+        # outside methods a changed class / a method of one
+        "shortlisted": bool(changed & listed) if changed else bool(
+            changed_classes & (listed | {_class_of(i) for i in listed})),
         "fallback_locations": fallback,
         "high_methods": len(high_methods), "main_methods": main_methods,
         "coverage": round(len(high_methods) / main_methods, 4) if main_methods else None,
@@ -107,6 +116,7 @@ def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
         out[name] = {
             "cases": len(rows), "hit": rate(rows, "hit"), "class_hit": rate(rows, "class_hit"),
             "located": rate(rows, "located"), "located_class": rate(rows, "located_class"),
+            "shortlisted": rate([r for r in rows if "shortlisted" in r], "shortlisted"),
             "mean_coverage": mean([r["coverage"] for r in rows if r["coverage"] is not None]),
             "mean_test_recall": mean([r["test_recall"] for r in with_tests]),
             "cases_with_changed_tests": len(with_tests),

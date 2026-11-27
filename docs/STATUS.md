@@ -56,14 +56,24 @@ Done: reviewed and committed by the owner (5d4c3e5).
 
 Phase 5 done criterion met: the branch maps for three hand-checked petclinic endpoints (POST /owners/new, GET /owners, POST /owners/{ownerId}/pets/new) match the hand-written answer key — branch lines, kinds, drivers, exits, returns, throws, validation fields, the custom validator and input roles (`test_petclinic_branch_maps_match_hand_written_answer_key`).
 
+## Phase 8: Evaluation and Python (plan approved 2026-11-26)
+
+| Step | State |
+|---|---|
+| 1. Java dataset: 37 hand-picked fixes (22 Spring apps, 15 Defects4J) → 26 kept after dropping pull requests and missing issues; ground truth from the fix's diff; dev / held-out by hash | done (next commit) |
+| 2. `rib eval`: issue text only, model picks locations alone, brief, scored | done (next commit) |
+| 3. Results + hand analysis of misses: 18/26 hit (dev 13/16, held-out 5/10) — [eval/java/results.md](../eval/java/results.md) | done (next commit) |
+| 4. Python adapter (FastAPI / Flask / Django, SQLAlchemy / Django models, branches) | not started |
+| 5. BugsInPy evaluation (~10–15 bugs) | not started |
+
 ## Phase 7: Release impact brief (plan approved 2026-11-26)
 
 | Step | State |
 |---|---|
-| 1. Bug input; candidate locations (retrieval shortlist, the model picks with reasons, validated); user confirms / adds by search | done (next commit) |
-| 2. Deterministic traversal: callers (incl. overrides), endpoints, branches in changed methods and conditions reading the changed call's result or field, entities / relations / repositories, services calling in, flows, related tests | done (next commit) |
-| 3. High / low by explainable rules; size signal with reasons; "couldn't see" list | done (next commit) |
-| 4. One-page brief with cited explanation, impact overlay on the diagram, print and Markdown export | done (next commit) |
+| 1. Bug input; candidate locations (retrieval shortlist, the model picks with reasons, validated); user confirms / adds by search | done (738affe) |
+| 2. Deterministic traversal: callers (incl. overrides), endpoints, branches in changed methods and conditions reading the changed call's result or field, entities / relations / repositories, services calling in, flows, related tests | done (738affe) |
+| 3. High / low by explainable rules; size signal with reasons; "couldn't see" list | done (738affe) |
+| 4. One-page brief with cited explanation, impact overlay on the diagram, print and Markdown export | done (738affe) |
 
 Seeded check: three petclinic bugs (owner search, future birth date, visits on the wrong pet) match the hand-written expectations (`test_seeded_petclinic_briefs_match_the_hand_written_expectations`). Done when the owner would bring a petclinic brief to a meeting — **waiting for the owner's review**.
 
@@ -94,7 +104,7 @@ Phase 2 done criterion met: both petclinic repos are classified correctly with t
 
 1. Check CI on GitHub → Actions for the latest push.
 2. `.rib/facts.sqlite` rebuilds itself when the schema changes, and `rib` re-extracts every run: no more `rm -rf .rib`.
-3. Next: owner reviews Phase 7 (open a view → "Write a release impact brief"), commits; Phase 8 (evaluation on ~30 real fixes, then the Python adapter) needs a plan approved first.
+3. Next: owner commits Phase 8a (Java evaluation); then Phase 8b, the Python adapter and BugsInPy evaluation.
 
 Identity check for commits: run `git config user.email` (not `--global`) inside the repo; it must show the jayaveeragh noreply address.
 

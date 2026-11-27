@@ -1,6 +1,6 @@
 # release-impact-brief
 
-> Work in progress. Phases 0–7 done (foundation, Java facts, system structure, LLM interpretation, web app, drill-down and branch map, chat, release impact brief); Phase 8 (evaluation and Python) next.
+> Work in progress. Phases 0–7 done (foundation, Java facts, system structure, LLM interpretation, web app, drill-down and branch map, chat, release impact brief); Phase 8 in progress: Java evaluation done (18/26 real fixes hit), Python adapter next.
 
 Paste a public GitHub URL and get a visual explanation of the repository, from architecture down to the branches inside one endpoint. Describe a bug and get a one-page brief of what a likely fix could affect, to help decide whether the fix goes into a release.
 
@@ -30,7 +30,24 @@ Design rule: **facts first, creativity on top.** Deterministic parsing produces 
 | 5     | `d514eae`     | Drill-down: click an endpoint for its **branch map** — every `if` / `switch` / ternary / `catch`, which request inputs drive it (traced through local variables, query results, getters into request-object fields, and Spring validation: `result.hasErrors()` = the `@Valid` object's constraints plus earlier `rejectValue`s), where each path returns or throws and what it calls, and a matrix that separates driving inputs from pass-through and unused ones. Module pages show summaries, classes, endpoints and the main flows the LLM picks on request, every step checked against the facts. Matches a hand-written answer key for three petclinic endpoints |
 | 5     | `1e650c2`     | Fetch limits are settings: `RIB_MAX_FILES`, `RIB_MAX_SIZE_MB`, `RIB_MAX_FILE_MB`, `RIB_FETCH_TIMEOUT` in `.env` (defaults unchanged); the "limit exceeded" message says which one to raise |
 | 6     | `acdd951`     | Chat: ask about the repo, a module or an endpoint; answers come only from retrieved snippets of this commit's code, every statement links to the lines it comes from, uncited statements are removed and listed, and what the code can't settle is said separately. Read-only. Checked against 10 hand-written petclinic questions |
-| 7     | _next commit_ | **Release impact brief**: describe a bug (plus a suspected area / likely fix), confirm the code locations the model proposes, and get one page: a size signal (looks small / looks big / can't tell, with reasons), high- and low-impact areas with the call path behind each, the branch conditions that read changed data or results, related existing tests, what the tool couldn't see, an explanation that cites every item, and the architecture diagram with affected boxes highlighted. Print or download as Markdown. No probabilities; the repo's tests are never run |
+| 7     | `738affe`     | **Release impact brief**: describe a bug (plus a suspected area / likely fix), confirm the code locations the model proposes, and get one page: a size signal (looks small / looks big / can't tell, with reasons), high- and low-impact areas with the call path behind each, the branch conditions that read changed data or results, related existing tests, what the tool couldn't see, an explanation that cites every item, and the architecture diagram with affected boxes highlighted. Print or download as Markdown. No probabilities; the repo's tests are never run |
+| 8     | _next commit_ | **Evaluation on 26 real Java bug fixes** (14 Defects4J, 12 from spring-petclinic and start.spring.io), from only the issue text, with the model picking locations alone: the brief's high-impact set contained a method the fix changed in **18/26** (dev 13/16, held-out 5/10), while marking a mean 2.6% of main-code methods high; tests the fix touched were listed with mean recall 0.62. Every miss analysed by hand in [eval/java/results.md](eval/java/results.md). `rib eval` re-runs it |
+
+## Evaluation (Java)
+
+Replayed 26 real bug fixes with the free local model (details and every miss: [eval/java/results.md](eval/java/results.md)):
+
+| | All | Dev | Held-out |
+|---|---|---|---|
+| High-impact set contains a changed method | 18/26 | 13/16 | 5/10 |
+| Model's own picks include a changed method | 15/26 | 11/16 | 4/10 |
+| Mean share of methods marked high | 2.6% | 2.3% | 3.1% |
+
+Held-out is clearly worse than dev; the main causes are vague issue text and plausible-but-wrong neighbours. The size signal has no ground truth and is not measured.
+
+```bash
+.venv/bin/rib eval eval/java/dataset.json   # ~8 min with the local model
+```
 
 ## Development
 

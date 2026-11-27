@@ -1,0 +1,646 @@
+{
+  "built": "by eval/java/build_dataset.py from cases.json",
+  "cases": [
+    {
+      "id": "spring-petclinic#1752",
+      "source": "spring-app",
+      "repo": "spring-projects/spring-petclinic",
+      "pre_fix": "6328d2c9dc8eb2c367c6a613a1ae959c994003c7",
+      "fix": "2aa53f929d32b0d41e0fe0391b8385eabe9a3432",
+      "issue": {
+        "github": "spring-projects/spring-petclinic",
+        "number": 1752
+      },
+      "subject": "Fix pet update functionality - Fixed issue where editing a pet's type or name wasn't persisting - Updated processUpdateForm to modify existing pet instead of   adding new one - Added proper handling of existing pet update",
+      "issue_text": "Pet details are not updated\n\nExample: go to first owner with pet Leo of type cat.\r\nClick on edit pet and change the type to bird or change the name.\r\nClick on Update pet.\r\nThe pet is not updated, even though a success message is shown.\r\nWhen I analysed the code, I found that the updated pet is given to the addPet method of the owner which does not change the pet in the owner list, as the pet is not new.\r\nIn PetController:\r\n![grafik](https://github.com/user-attachments/assets/3d33ef4c-5340-4dfc-8e1d-cdb1847d0df6)",
+      "group": "held-out",
+      "changed_methods": [
+        "java:method:org.springframework.samples.petclinic.owner.PetController#processUpdateForm(Owner,Pet,BindingResult,RedirectAttributes)"
+      ],
+      "changed_classes": [
+        "java:class:org.springframework.samples.petclinic.owner.PetController"
+      ],
+      "changed_tests": [],
+      "main_methods": 88
+    },
+    {
+      "id": "spring-petclinic#207",
+      "source": "spring-app",
+      "repo": "spring-projects/spring-petclinic",
+      "pre_fix": "ca2a66500fbf240e782aebb816dc7cf5c0a00fe1",
+      "fix": "61be1bac41293482506215d879da2b95961f582d",
+      "issue": {
+        "github": "spring-projects/spring-petclinic",
+        "number": 207
+      },
+      "subject": "Fix #207 set pet owner when for has an error",
+      "issue_text": "Owner null null\n\nWhile editing a pet with invalid data, firstname and lastname of the owner are replaced by null: \r\n<img width=\"997\" alt=\"owner-null-null\" src=\"https://cloud.githubusercontent.com/assets/838318/20423029/2c8f44f6-ad6e-11e6-9d98-25d5bde05012.png\">\r\nMaybe introduce by the JSP to Thymeleaf migration?",
+      "group": "held-out",
+      "changed_methods": [
+        "java:method:org.springframework.samples.petclinic.owner.PetController#processUpdateForm(Pet,BindingResult,Owner,ModelMap)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [],
+      "main_methods": 90
+    },
+    {
+      "id": "spring-petclinic#110",
+      "source": "spring-app",
+      "repo": "spring-projects/spring-petclinic",
+      "pre_fix": "dd552f497084f240eec49e4373de5f6a2af64b0a",
+      "fix": "4aa89ae4e2b75e37aa8869b48ab1908e61af74e0",
+      "issue": {
+        "github": "spring-projects/spring-petclinic",
+        "number": 110
+      },
+      "subject": "Fix #110 owner and pet validators failed",
+      "issue_text": "HTTP 400 error if editing pets with invalid date instead of 'invalid date' message\n\nIf you try to edit pet's birth name with some invalid value (e.g. 2012/09/44), the HTTP Status 400 error page is shown instead of displaying nice 'invalid date' message in edit pet form.\n\nThis error is caused by https://github.com/spring-projects/spring-petclinic/commit/3bcf84543ec586173731942a83178eed561f7d3a",
+      "group": "held-out",
+      "changed_methods": [
+        "java:method:org.springframework.samples.petclinic.web.OwnerController#processUpdateOwnerForm(Owner,int,BindingResult)",
+        "java:method:org.springframework.samples.petclinic.web.PetController#processUpdateForm(Pet,Owner,BindingResult,ModelMap)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [],
+      "main_methods": 152
+    },
+    {
+      "id": "spring-petclinic#108",
+      "source": "spring-app",
+      "repo": "spring-projects/spring-petclinic",
+      "pre_fix": "3bcf84543ec586173731942a83178eed561f7d3a",
+      "fix": "dd552f497084f240eec49e4373de5f6a2af64b0a",
+      "issue": {
+        "github": "spring-projects/spring-petclinic",
+        "number": 108
+      },
+      "subject": "Fix #108 owner update",
+      "issue_text": "Updating owner causes creation of brand new owner instead of actual update\n\nI tried to update the first name of owner 'Jean Coleman' to 'Jeann', but instead of updating the brand new owner 'Jeann Coleman' was created.\n\nI don't know what is the problem exactly, but it is caused by https://github.com/spring-projects/spring-petclinic/commit/3bcf84543ec586173731942a83178eed561f7d3a",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:org.springframework.samples.petclinic.web.OwnerController#processUpdateOwnerForm(Owner,BindingResult)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [],
+      "main_methods": 152
+    },
+    {
+      "id": "spring-petclinic#92",
+      "source": "spring-app",
+      "repo": "spring-projects/spring-petclinic",
+      "pre_fix": "39ab8361d4fae189295af5fc4af848f4c6bd3756",
+      "fix": "91d19d17b817eb7c24593ea3a3c1ef52374b2eee",
+      "issue": {
+        "github": "spring-projects/spring-petclinic",
+        "number": 92
+      },
+      "subject": "#92 Fix column 'visits.id' not found on MySql",
+      "issue_text": "fail to run test in maven\n\nI encountered an issue that description is \"org.springframework.jdbc.UncategorizedSQLException: PreparedStatementCallback; uncategorized SQLException for SQL [SELECT id as visit_id, visit_date, description FROM visits WHERE pet_id=?]; SQL state [S0022]; error code [0]; Column 'visits.id' not found.; nested exception is java.sql.SQLException: Column 'visits.id' not found.\" when running test in maven.\n\nI use MySQL as database.\n![petclinic-issue](https://cloud.githubusercontent.com/assets/8818456/9292989/bde3b08e-4449-11e5-845c-a8ac7c7d5bb2.jpg)\n\nI think the root cause is that the sql in method \"findByPetId\" of class JdbcVisitRepositoryImpl are not mapped with the method \"mapRow\" of class JdbcVisitRowMapper.",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:org.springframework.samples.petclinic.repository.jdbc.JdbcVisitRepositoryImpl#findByPetId(Integer)",
+        "java:method:org.springframework.samples.petclinic.repository.jdbc.JdbcVisitRowMapper#mapRow(ResultSet,int)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [],
+      "main_methods": 150
+    },
+    {
+      "id": "start.spring.io#2271",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "66dcb625ee37fc03ee5b45e7ed920815b6c5fafb",
+      "fix": "a979cc3ab398c354e3f254b687f38a2517da4f09",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 2271
+      },
+      "subject": "Avoid duplicate LDAP starter when embedding LDAP server",
+      "issue_text": "Adding Spring LDAP and Embedded LDAP server adds spring-boot-starter-ldap twice\n\nOne dependency with no scope, and one with scope test - when using Maven, this results in classes from spring-boot-starter-ldap not available on the compile classpath.",
+      "group": "held-out",
+      "changed_methods": [
+        "java:method:io.spring.start.site.extension.dependency.ldap.LdapUnboundIdBuildCustomizer#customize(Build)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [
+        "LdapUnboundIdBuildCustomizerTests"
+      ],
+      "main_methods": 581
+    },
+    {
+      "id": "start.spring.io#2263",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "bfd5c786bfa4d7520c19cc46feebfcf9ff5a3202",
+      "fix": "04bb870139f0126910da6b28b8e39019eb6bb7bc",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 2263
+      },
+      "subject": "Log warning instead of fail when a Boot version mapping is missing",
+      "issue_text": "Unable to create Spring Boot 4.2.x projects",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:io.spring.start.site.project.JavaVersionMapping#findMapping(Version)"
+      ],
+      "changed_classes": [
+        "java:class:io.spring.start.site.project.JavaVersionMapping"
+      ],
+      "changed_tests": [],
+      "main_methods": 595
+    },
+    {
+      "id": "start.spring.io#2120",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "c81076cdc29b43bc49c766b1e407858d6e322429",
+      "fix": "fa1503b742957d3ce0bd0f3d2db27ebb1fb541dc",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 2120
+      },
+      "subject": "Use artifact id as fallback to generate the application name",
+      "issue_text": "Application main classes should not be all named Application\n\nFollowing the name removal from the UI, all application main classes are now named `Application`. The `Demo` in `DemoApplication` has been derived from the name, which we now set to \"\".\n\nWe should change that so that the application main class is derived from the artifact id.",
+      "group": "held-out",
+      "changed_methods": [],
+      "changed_classes": [
+        "java:class:io.spring.start.site.project.ProjectDescriptionCustomizerConfiguration"
+      ],
+      "changed_tests": [
+        "TestcontainersProjectGenerationConfigurationTests"
+      ],
+      "main_methods": 608
+    },
+    {
+      "id": "start.spring.io#1686",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "1f305a0d1241fb630a8d28c59cb9817c92577b07",
+      "fix": "7f436b34f784d825969520c638c2b8035034744b",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 1686
+      },
+      "subject": "Fix gRPC Maven configuration",
+      "issue_text": "Generated Maven gRPC project doesn't build\n\n```\r\n[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project demo: Compilation failure\r\n[ERROR] /home/mhalbritter/Downloads/demo/target/generated-sources/protobuf/grpc-java/org/springframework/grpc/sample/proto/SimpleGrpc.java:[10,18] cannot find symbol\r\n[ERROR]   symbol:   class Generated\r\n[ERROR]   location: package javax.annotation\r\n\r\n```",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:io.spring.start.site.extension.dependency.springgrpc.GrpcMavenBuildCustomizer#addProtobufPlugin(MavenPluginContainer,VersionProperty,VersionProperty)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [
+        "SpringGrpcProjectGenerationConfigurationTests"
+      ],
+      "main_methods": 513
+    },
+    {
+      "id": "start.spring.io#1458",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "cd5d86dd5d5d0a063ada72bfe78362ba8fbf9cc2",
+      "fix": "977b165435f7cd1b3d268398a05974d925df56cb",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 1458
+      },
+      "subject": "Don't duplicate Postgres databases",
+      "issue_text": "Duplicate postgres Docker Compose service when selecting PostgreSQL and pgvector\n\nExample compose.yaml\r\n\r\n```yaml\r\nservices:\r\n  pgvector:\r\n    image: 'pgvector/pgvector:pg16'\r\n    environment:\r\n      - 'POSTGRES_DB=mydatabase'\r\n      - 'POSTGRES_PASSWORD=secret'\r\n      - 'POSTGRES_USER=myuser'\r\n    labels:\r\n      - \"org.springframework.boot.service-connection=postgres\"\r\n    ports:\r\n      - '5432'\r\n  postgres:\r\n    image: 'postgres:latest'\r\n    environment:\r\n      - 'POSTGRES_DB=mydatabase'\r\n      - 'POSTGRES_PASSWORD=secret'\r\n      - 'POSTGRES_USER=myuser'\r\n    ports:\r\n      - '5432'\r\n```\r\n\r\nThe label on the pgvector service even says \"postgres\" I think we should assume that the user only wants one database.\r\n\r\nIn this case we should remove the \"postgres\" service from the compose.yaml that gets delivered.",
+      "group": "held-out",
+      "changed_methods": [
+        "java:method:io.spring.start.site.extension.dependency.postgresql.PgVectorProjectGenerationConfiguration#pgvectorComposeFileCustomizer(DockerServiceResolver)",
+        "java:method:io.spring.start.site.extension.dependency.postgresql.PostgresqlProjectGenerationConfiguration#postgresqlComposeFileCustomizer(DockerServiceResolver)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [
+        "PgVectorProjectGenerationConfigurationTests"
+      ],
+      "main_methods": 437
+    },
+    {
+      "id": "start.spring.io#1377",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "7342695f1defb8362df4c5e9491c069fe16fbc09",
+      "fix": "2723265373417f27c31aeb8d6bbc65963b2160d7",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 1377
+      },
+      "subject": "Fix bean name of Zipkin Service Connections support",
+      "issue_text": "Project generation fails when selecting Testcontainers, Oracle, and Zipkin\n\n```\r\n2023-12-14T18:14:05.682Z ERROR 3237 --- [nio-8080-exec-5] o.a.c.c.C.[.[.[/].[dispatcherServlet]    : Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed: org.springframework.beans.factory.support.BeanDefinitionOverrideException: Invalid bean definition with name 'oracleServiceConnectionsCustomizer' defined in class path resource [io/spring/start/site/extension/dependency/zipkin/ZipkinProjectGenerationConfiguration.class]: Cannot register bean definition [Root bean: class [null]; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=io.spring.start.site.extension.dependency.zipkin.ZipkinProjectGenerationConfiguration; factoryMethodName=oracleServiceConnectionsCustomizer; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in class path resource [io/spring/start/site/extension/dependency/zipkin/ZipkinProjectGenerationConfiguration.class]] for bean 'oracleServiceConnectionsCustomizer' since there is already [Root bean: class [null]; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=io.spring.start.site.extension.dependency.oracle.OracleProjectGenerationConfiguration; factoryMethodName=oracleServiceConnectionsCustomizer; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in class path resource [io/spring/start/site/extension/dependency/oracle/OracleProjectGenerationConfiguration.class]] bound.] with root cause\r\n\r\norg.springframework.beans.factory.support.BeanDefinitionOverrideException: Invalid bean definition with name 'oracleServiceConnectionsCustomizer' defined in class path resource [io/spring/start/site/extension/dependency/zipkin/ZipkinProjectGenerationConfiguration.class]: Cannot register bean definition [Root bean: class [null]; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=io.spring.start.site.extension.dependency.zipkin.ZipkinProjectGenerationConfiguration; factoryMethodName=oracleServiceConnectionsCustomizer; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in class path resource [io/spring/start/site/extension/dependency/zipkin/ZipkinProjectGenerationConfiguration.class]] for bean 'oracleServiceConnectionsCustomizer' since there is already [Root bean: class [null]; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=io.spring.start.site.extension.dependency.oracle.OracleProjectGenerationConfiguration; factoryMethodName=oracleServiceConnectionsCustomizer; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in class path resource [io/spring/start/site/extension/dependency/oracle/OracleProjectGenerationConfiguration.class]] bound.\r\n\tat org.springframework.beans.factory.support.DefaultListableBeanFactory.registerBeanDefinition(DefaultListableBeanFactory.java:1015) ~[spring-beans-6.1.1.jar:6.1.1]\r\n\tat org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader.loadBeanDefinitionsForBeanMethod(ConfigurationClassBeanDefinitionReader.java:277) ~[spring-context-6.1.1.jar:6.1.1]\r\n\tat org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader.loadBeanDefinitionsForConfigurationClass(ConfigurationClassBeanDefinitionReader.java:144) ~[spring-context-6.1.1.jar:6.1.1]\r\n\tat org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader.loadBeanDefinitions(ConfigurationClassBeanDefinitionReader.java:120) ~[spring-context-6.1.1.jar:6.1.1]\r\n\tat org.springframework.context.annotation.ConfigurationClassPostProcessor.processConfigBeanDefinitions(ConfigurationClassPostProcessor.java:428) ~[spring-context-6.1.1.jar:6.1.1]\r\n\tat org.springframework.context.annotation.ConfigurationClassPostProces",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:io.spring.start.site.extension.dependency.zipkin.ZipkinProjectGenerationConfiguration#oracleServiceConnectionsCustomizer(DockerServiceResolver)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [],
+      "main_methods": 410
+    },
+    {
+      "id": "start.spring.io#1217",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "f66c41837a607ac22103bd64b5df085a5b8e8e3d",
+      "fix": "eb4173c942bf8ced2978f41204923cd6694eae52",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 1217
+      },
+      "subject": "Fix visibility of Test Application class",
+      "issue_text": "Make the generated `main(String[] args)` test class `public`\n\nI've noticed an issue when using Devtools, `./gradlew bootTestRun`, and Testcontainers (and I'm using Postgres, though I don't know if that matters) where the app either refuses to start (such as in IntelliJ) or refuses to reload new types.  the issue seems to go away when I put `public` on the generated test class with a `main(String [] args)` method. Ideally, Devtools wouldn't care about a non-public class for the `main` method, [and I've asked about that here](https://github.com/spring-projects/spring-boot/issues/35858)",
+      "group": "held-out",
+      "changed_methods": [
+        "java:method:io.spring.start.site.extension.dependency.testcontainers.GroovyTestContainersApplicationCodeProjectContributor#contributeCode(GroovySourceCode)",
+        "java:method:io.spring.start.site.extension.dependency.testcontainers.JavaTestContainersApplicationCodeProjectContributor#contributeCode(JavaSourceCode)",
+        "java:method:io.spring.start.site.extension.dependency.testcontainers.KotlinTestContainersApplicationCodeProjectContributor#contributeCode(KotlinSourceCode)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [
+        "TestcontainersProjectGenerationConfigurationTests"
+      ],
+      "main_methods": 356
+    },
+    {
+      "id": "d4j-Lang-1",
+      "source": "defects4j",
+      "repo": "apache/commons-lang",
+      "pre_fix": "396afc3e4693cfee182efe582455f2d97058c068",
+      "fix": "d1a45e9738de5b3e299bb51e987565dcce55fee6",
+      "issue": {
+        "jira": "LANG-747"
+      },
+      "subject": "",
+      "issue_text": "NumberUtils does not handle Long Hex numbers\n\nNumberUtils.createLong() does not handle hex numbers, but createInteger() handles hex and octal.\nThis seems odd.\n\nNumberUtils.createNumber() assumes that hex numbers can only be Integer.\nAgain, why not handle bigger Hex numbers?\n\n==\n\nIt is trivial to fix createLong() - just use Long.decode() instead of valueOf().\nIt's not clear why this was not done originally - the decode() method was added to both Integer and Long in Java 1.2.\n\nFixing createNumber() is also fairly easy - if the hex string has more than 8 digits, use Long.\n\nShould we allow for leading zeros in an Integer? \nIf not, the length check is trivial.",
+      "group": "held-out",
+      "changed_methods": [
+        "java:method:org.apache.commons.lang3.math.NumberUtils#createNumber(String)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [
+        "NumberUtilsTest"
+      ],
+      "main_methods": 2442
+    },
+    {
+      "id": "d4j-Lang-3",
+      "source": "defects4j",
+      "repo": "apache/commons-lang",
+      "pre_fix": "64cfee77e333d0c31a0fde0abe6dac3d97b0f078",
+      "fix": "8a1042959df80c06dbfa83896594caa8e20ff9d6",
+      "issue": {
+        "jira": "LANG-693"
+      },
+      "subject": "",
+      "issue_text": "Method createNumber from NumberUtils doesn't work for floating point numbers other than Float\n\nMethod createNumber from NumberUtils is trying to parse a string with a floating point number always first as a Float, that will cause that if we send a string with a number that will need a Double or even a BigDecimal the number will be truncate to accommodate into the Float without an exception to be thrown, so in fact we will no be returning ever neither a Double nor a BigDecimal.",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:org.apache.commons.lang3.math.NumberUtils#createNumber(String)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [
+        "NumberUtilsTest"
+      ],
+      "main_methods": 2435
+    },
+    {
+      "id": "d4j-Lang-4",
+      "source": "defects4j",
+      "repo": "apache/commons-lang",
+      "pre_fix": "cd91a4f2cd0ced1178e8fd1f49229196eb88094c",
+      "fix": "0cdc976684efcf478397b68c1d54cefc87bb92c9",
+      "issue": {
+        "jira": "LANG-882"
+      },
+      "subject": "",
+      "issue_text": "LookupTranslator accepts CharSequence as input, but fails to work with implementations other than String\n\nThe core of {{org.apache.commons.lang3.text.translate}} is a {{HashMap<CharSequence, CharSequence> lookupMap}}.\n\nFrom the Javadoc of {{CharSequence}} (emphasis mine):\n{quote}\nThis interface does not refine the general contracts of the equals and hashCode methods. The result of comparing two objects that implement CharSequence is therefore, in general, undefined. Each object may be implemented by a different class, and there is no guarantee that each class will be capable of testing its instances for equality with those of the other. *It is therefore inappropriate to use arbitrary CharSequence instances as elements in a set or as keys in a map.*\n{quote}\n\nThe current implementation causes code such as the following to not work as expected:\n\n{code}\nCharSequence cs1 = \"1 < 2\";\nCharSequence cs2 = CharBuffer.wrap(\"1 < 2\".toCharArray());\n\nSystem.out.println(StringEscapeUtils.ESCAPE_HTML4.translate(cs1));\nSystem.out.println(StringEscapeUtils.ESCAPE_HTML4.translate(cs2));\n{code}\n\n... which gives the following results (but should be identical):\n{noformat}\n1 &lt; 2\n1 < 2\n{noformat}\n\nThe problem, at a minimum, is that {{CharBuffer.equals}} is even documented in the Javadoc that:\n{quote}\nA char buffer is not equal to any other type of object.\n{quote}\n\n... so a lookup on a CharBuffer in the Map will always fail when compared against the String implementations that it contains.\n\nAn obvious work-around is to instead use something along the lines of either of the following:\n{code}\nSystem.out.println(StringEscapeUtils.ESCAPE_HTML4.translate(cs2.toString()));\nSystem.out.println(StringEscapeUtils.escapeHtml4(cs2.toString()));\n{code}\n\n... which forces everything back to a {{String}}.  However, this is not practical when working with large sets of data, which would require significant heap allocations and garbage collection concerns.  (As such, I was actually trying to use the {{translate}} method that outputs to a {{Writer}} - but simplified the above examples to omit this.)\n\nAnother option that I'm considering is to use a custom {{CharSequence}} wrapper around a {{char[]}} that implements {{hashCode()}} and {{equals()}} to work with those implemented on {{String}}.  (However, this will be interesting due to the symmetric assumption - which is further interesting that {{String.equals}} is currently implemented using {{instanceof}} - even though {{String}} is {{final}}...)",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:org.apache.commons.lang3.text.translate.LookupTranslator#LookupTranslator(CharSequence[]...)",
+        "java:method:org.apache.commons.lang3.text.translate.LookupTranslator#translate(CharSequence,int,Writer)"
+      ],
+      "changed_classes": [
+        "java:class:org.apache.commons.lang3.text.translate.LookupTranslator"
+      ],
+      "changed_tests": [
+        "LookupTranslatorTest"
+      ],
+      "main_methods": 2432
+    },
+    {
+      "id": "d4j-Cli-1",
+      "source": "defects4j",
+      "repo": "apache/commons-cli",
+      "pre_fix": "8f46f467a33ace44ccd9f394910940b6c48a3827",
+      "fix": "b0e1b80b6d4a10a9c9f46539bc4c7a3cce55886e",
+      "issue": {
+        "jira": "CLI-13"
+      },
+      "subject": "",
+      "issue_text": "[cli] CommandLine.getOptionValue() behaves contrary to docs\n\nHi\n\nIf I have:\n\nfinal String debugOpt = \"debug\";\n\tOption debug = OptionBuilder\n\t    .withArgName(debugOpt)\n\t    .withDescription(\"turn on debugging\")\n\t    .withLongOpt(debugOpt)\n\t    .create('d');\n\nand then later I do:\n\nString dbg = commandLine.getOptionValue(debugOpt);\n\nthen dbg will be null. Instead, I have to use getOptionValue('d'). This seems\ncontrary to the docs (see bottom of\nhttp://jakarta.apache.org/commons/cli/usage.html), which implies that I should\nbe able to query the commandLine object using a full string, rather than just\nthe string's first character.\n\nCan I suggest that the API of OptionBuilder be made clearer so that it is\nobvious that you can have long and short option names---perhaps make the\ncreate() method take no arguments (thus forcing long and short arg names to be\nset explicitly). (Also, there seems to be some confusion between the terms\n'argument' and 'option' in the API, but perhaps that is just me).\n\nAlso, I would hop to be able to query commandLine by either a single char or an\nentire string, as suggested by the docs.\n\nThanks,\n\nChris",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:org.apache.commons.cli.CommandLine#addOption(Option)",
+        "java:method:org.apache.commons.cli.CommandLine#getOptionObject(String)",
+        "java:method:org.apache.commons.cli.CommandLine#getOptionValues(String)",
+        "java:method:org.apache.commons.cli.CommandLine#getOptions()",
+        "java:method:org.apache.commons.cli.CommandLine#hasOption(String)",
+        "java:method:org.apache.commons.cli.CommandLine#iterator()",
+        "java:method:org.apache.commons.cli.Option#hasNoValues()"
+      ],
+      "changed_classes": [
+        "java:class:org.apache.commons.cli.CommandLine"
+      ],
+      "changed_tests": [],
+      "main_methods": 188
+    },
+    {
+      "id": "d4j-Cli-2",
+      "source": "defects4j",
+      "repo": "apache/commons-cli",
+      "pre_fix": "b0e1b80b6d4a10a9c9f46539bc4c7a3cce55886e",
+      "fix": "2ff9573ffb08dd52ec3a55a49f2d77a1e94efbdf",
+      "issue": {
+        "jira": "CLI-51"
+      },
+      "subject": "",
+      "issue_text": "[cli] Parameter value \"-something\" misinterpreted as a parameter\n\nIf a parameter value is passed that contains a hyphen as the (delimited) first \ncharacter, CLI parses this a parameter. For example using the call\njava myclass -t \"-something\"\nResults in the parser creating the invalid parameter -o (noting that it is \nskipping the 's')\n\nMy code is using the Posix parser as follows\nOptions options = buildCommandLineOptions();\nCommandLineParser parser = new PosixParser();\nCommandLine commandLine = null;\ntry {\n\t\t\t\n\tcommandLine = parser.parse(options, args);\n}\ncatch (ParseException e) {\n\t\t\t\n\tSystem.out.println(\"Invalid parameters. \" + e.getMessage() + NEW_LINE);\n\tSystem.exit(EXIT_CODE_ERROR);\n}\n\nThis has been tested against the nightly build dated 20050503.",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:org.apache.commons.cli.PosixParser#burstToken(String,boolean)",
+        "java:method:org.apache.commons.cli.PosixParser#flatten(Options,String[],boolean)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [],
+      "main_methods": 191
+    },
+    {
+      "id": "d4j-Csv-1",
+      "source": "defects4j",
+      "repo": "apache/commons-csv",
+      "pre_fix": "0833f45bffd40f44ba6f294d84e9bac8a9ba0a37",
+      "fix": "de1838ea067f3fbc4c7c21b9eeae077c739ecb73",
+      "issue": {
+        "jira": "CSV-75"
+      },
+      "subject": "",
+      "issue_text": "ExtendedBufferReader does not handle EOL consistently\n\nExtendedBufferReader checks for '\\n' (LF) in the read() methods, incrementing linecount when found.\n\nHowever, the readLine() method calls BufferedReader.readLine() which treats CR, LF and CRLF equally (and drops them).\n\nIf the code is to be flexible in what it accepts, the class should also allow for CR alone as a line terminator.\n\nIt should work if the code increments the line counter for CR, and for LF if the previous character was not CR.",
+      "group": "held-out",
+      "changed_methods": [
+        "java:method:org.apache.commons.csv.ExtendedBufferedReader#read()",
+        "java:method:org.apache.commons.csv.ExtendedBufferedReader#read(char[],int,int)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [
+        "CSVParserTest"
+      ],
+      "main_methods": 75
+    },
+    {
+      "id": "d4j-Csv-2",
+      "source": "defects4j",
+      "repo": "apache/commons-csv",
+      "pre_fix": "5744ee8a1698687fe4acc0c269cbbbb1e234b06d",
+      "fix": "a0d975933d6fe9eb5f359088de43508c1d3109bf",
+      "issue": {
+        "jira": "CSV-96"
+      },
+      "subject": "",
+      "issue_text": "CSVRecord does not verify that the length of the header mapping matches the number of values\n\nCSVRecord does not verify that the size of the header mapping matches the number of values. The following test will produce a ArrayOutOfBoundsException:\n\n{code}\n@Test\npublic void testInvalidHeaderTooLong() throws Exception {\n   final CSVParser parser = new CSVParser(\"a,b\", CSVFormat.newBuilder().withHeader(\"A\", \"B\", \"C\").build());\n   final CSVRecord record = parser.iterator().next();\n   record.get(\"C\");\n}\n{code}",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:org.apache.commons.csv.CSVRecord#get(String)"
+      ],
+      "changed_classes": [
+        "java:class:org.apache.commons.csv.CSVRecord"
+      ],
+      "changed_tests": [],
+      "main_methods": 107
+    },
+    {
+      "id": "d4j-Codec-1",
+      "source": "defects4j",
+      "repo": "apache/commons-codec",
+      "pre_fix": "9c0cabead7cf075308b11362172ae1a48d41321c",
+      "fix": "52d82d1dfff8c2b2ded9d843e0b03017af6d747c",
+      "issue": {
+        "jira": "CODEC-65"
+      },
+      "subject": "",
+      "issue_text": "Fix case-insensitive string handling\n\nThe language codecs are platform-depedent, please see [Common Bug #3|http://www.nabble.com/Re%3A-Common-Bugs-p14931921s177.html] for details.",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:org.apache.commons.codec.language.Caverphone#caverphone(String)",
+        "java:method:org.apache.commons.codec.language.DoubleMetaphone#cleanInput(String)",
+        "java:method:org.apache.commons.codec.language.Metaphone#metaphone(String)",
+        "java:method:org.apache.commons.codec.language.SoundexUtils#clean(String)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [
+        "StringEncoderAbstractTest"
+      ],
+      "main_methods": 232
+    },
+    {
+      "id": "d4j-Codec-2",
+      "source": "defects4j",
+      "repo": "apache/commons-codec",
+      "pre_fix": "2f7454a01e4c2992bffc3d86137e632e80c5027f",
+      "fix": "b8c2d9d9dc9aab45f83cf49ac93cfa8546e4c08e",
+      "issue": {
+        "jira": "CODEC-77"
+      },
+      "subject": "",
+      "issue_text": "Base64 bug with empty input (new byte[0])\n\nBase64.encode(new byte[0]) doesn't return an empty byte array back!  It returns CRLF.",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:org.apache.commons.codec.binary.Base64#encode(byte[],int,int)"
+      ],
+      "changed_classes": [],
+      "changed_tests": [
+        "Base64InputStreamTest",
+        "Base64OutputStreamTest",
+        "Base64Test"
+      ],
+      "main_methods": 266
+    },
+    {
+      "id": "d4j-Gson-1",
+      "source": "defects4j",
+      "repo": "google/gson",
+      "pre_fix": "4413c299ea09c57b94af8647eec901554c2f5c50",
+      "fix": "c6a4f55d1a9b191dbbd958c366091e567191ccab",
+      "issue": {
+        "github": "google/gson",
+        "number": 40
+      },
+      "subject": "",
+      "issue_text": "Fails to serialize/deserialize a class where a super-class has a type parameter\n\n```\nUnfortunately, shortly after the Gson 1.2 release, I found a bug in the\nTypeVariable support.  Basically, the following class can not be serialized\nor deserialized using Gson:\n\npublic class Foo<T> {\n  private final T someField;\n\n  public Foo(T value) {\n    this.someField = value;\n  }\n\n  public boolean equals(Object o) {\n    if (!(o instanceof Foo)) {\n      return false;\n    } else {\n        return someField.equals(((Foo)o).someField);\n    }\n  }\n}\n\npublic class Bar extends Foo<Integer> {\n  public Bar(Integer i) {\n    super(i);\n  }\n}\n\nGson gson = new Gson();\nBar bar1 = new Bar(1);\nString json = gson.toJson(bar1);   // Fails\nBar bar2 = gson.fromJson(\"{\\\"someField\\\":1\", Bar.class);    // Fails\n\nassertEquals(bar1, bar2);\n\n```\n\nOriginal issue reported on code.google.com by `joel.leitch@gmail.com` on 29 Aug 2008 at 11:53\n- Merged into: #168",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:com.google.gson.TypeInfoFactory#getActualType(Type,Type,Class<?>)"
+      ],
+      "changed_classes": [
+        "java:class:com.google.gson.TypeInfoFactory"
+      ],
+      "changed_tests": [],
+      "main_methods": 1051
+    },
+    {
+      "id": "d4j-JacksonCore-1",
+      "source": "defects4j",
+      "repo": "FasterXML/jackson-core",
+      "pre_fix": "a9e5c9f99bcc16d734251f682758004a3ecc3a1b",
+      "fix": "b40ac81d4a81736e2b7536b14db4ad070b598d2e",
+      "issue": {
+        "github": "FasterXML/jackson-core",
+        "number": 98
+      },
+      "subject": "",
+      "issue_text": "NullPointerException thrown when NaN read as BigDecimal\n\n(moved from https://github.com/FasterXML/jackson/issues/4 reported by @jroper)\n\n---\n\nIf `JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS` is turned on, then when NaN is encountered, it will be reported as being a float number token. Subsequently invoking getDecimalNumber throws an NPE:\n\n```\nNullPointerException: null (TextBuffer.java:394)\ncom.fasterxml.jackson.core.util.TextBuffer.contentsAsDecimal(TextBuffer.java:394)\ncom.fasterxml.jackson.core.base.ParserBase._parseSlowFloatValue(ParserBase.java:799)\ncom.fasterxml.jackson.core.base.ParserBase._parseNumericValue(ParserBase.java:781)\n com.fasterxml.jackson.core.base.ParserBase.getDecimalValue(ParserBase.java:711)\n```\n\nBy the way, the expected behaviour here I would say would be to throw NumberFormatException, this is what is thrown by the BigDecimal constructor when you pass in Double.NaN or any of the infinity double values.\n\nI'm not sure, but maybe this NPE is also an issue for integers too, and the expected behaviour for them would also be to throw NumberFormatException.",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:com.fasterxml.jackson.core.base.ParserBase#convertNumberToBigDecimal()",
+        "java:method:com.fasterxml.jackson.core.io.NumberInput#parseDouble(String)",
+        "java:method:com.fasterxml.jackson.core.util.TextBuffer#contentsAsDecimal()"
+      ],
+      "changed_classes": [
+        "java:class:com.fasterxml.jackson.core.io.NumberInput"
+      ],
+      "changed_tests": [
+        "TestParserNonStandard"
+      ],
+      "main_methods": 1372
+    },
+    {
+      "id": "d4j-JacksonCore-2",
+      "source": "defects4j",
+      "repo": "FasterXML/jackson-core",
+      "pre_fix": "098ece8564ed5d37f483c3bfb45be897ed8974cd",
+      "fix": "38d6e35d1f1a9b48193804925517500de8efee1f",
+      "issue": {
+        "github": "FasterXML/jackson-core",
+        "number": 105
+      },
+      "subject": "",
+      "issue_text": "Parser parsers numbers eagerly; does not report error with missing space\n\n(note: moved from https://github.com/FasterXML/jackson-databind/issues/260)\n\n---\n\nIf you give input like:\n\n```\n123true\n```\n\nit will first successfully parse integer 123, and then boolean `true`. This should instead result in a parse exception.",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:com.fasterxml.jackson.core.base.ParserBase#_parseNumericValue(int)",
+        "java:method:com.fasterxml.jackson.core.base.ParserBase#_parseSlowFloatValue(int)",
+        "java:method:com.fasterxml.jackson.core.base.ParserBase#_parseSlowIntValue(int,char[],int,int)",
+        "java:method:com.fasterxml.jackson.core.base.ParserMinimalBase#_reportInvalidEOFInValue()",
+        "java:method:com.fasterxml.jackson.core.json.ReaderBasedJsonParser#_parseNumber(int)",
+        "java:method:com.fasterxml.jackson.core.json.ReaderBasedJsonParser#_parseNumber2(boolean)",
+        "java:method:com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_isNextTokenNameMaybe(int,SerializableString)",
+        "java:method:com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_isNextTokenNameYes()",
+        "java:method:com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_nextTokenNotInObject(int)",
+        "java:method:com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_parseFloatText(char[],int,int,boolean,int)",
+        "java:method:com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_parserNumber2(char[],int,boolean,int)",
+        "java:method:com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_skipWSOrEnd()",
+        "java:method:com.fasterxml.jackson.core.json.UTF8StreamJsonParser#nextToken()",
+        "java:method:com.fasterxml.jackson.core.json.UTF8StreamJsonParser#parseNumberText(int)"
+      ],
+      "changed_classes": [
+        "java:class:com.fasterxml.jackson.core.json.ReaderBasedJsonParser",
+        "java:class:com.fasterxml.jackson.core.json.UTF8StreamJsonParser"
+      ],
+      "changed_tests": [
+        "TestParserErrorHandling"
+      ],
+      "main_methods": 1407
+    },
+    {
+      "id": "d4j-Jsoup-1",
+      "source": "defects4j",
+      "repo": "jhy/jsoup",
+      "pre_fix": "77add7946ea5bca622b1f4f654f97e62f6db1e95",
+      "fix": "27a52f90a25699bebe23ff1ff94d6db361fdb11d",
+      "issue": {
+        "github": "jhy/jsoup",
+        "number": 23
+      },
+      "subject": "",
+      "issue_text": "Parsing a HTML snippet causes the leading text to be moved to back\n\nCode:\n\n```\nString html = \"foo <b>bar</b> baz\";\nString text = Jsoup.parse(html).text();\nSystem.out.println(text);\n```\n\nResult: \n\n```\nbar baz foo\n```\n\nExpected:\n\n```\nfoo bar baz\n```",
+      "group": "dev",
+      "changed_methods": [
+        "java:method:org.jsoup.nodes.Document#normalise()",
+        "java:method:org.jsoup.nodes.Document#normalise(Element)"
+      ],
+      "changed_classes": [
+        "java:class:org.jsoup.nodes.Document"
+      ],
+      "changed_tests": [
+        "ParserTest"
+      ],
+      "main_methods": 375
+    },
+    {
+      "id": "d4j-Jsoup-2",
+      "source": "defects4j",
+      "repo": "jhy/jsoup",
+      "pre_fix": "27a52f90a25699bebe23ff1ff94d6db361fdb11d",
+      "fix": "bb4ead7c350695c1ed3c52d028090da4d4cecd1e",
+      "issue": {
+        "github": "jhy/jsoup",
+        "number": 22
+      },
+      "subject": "",
+      "issue_text": "Unadorned text following data-only tags doesn't parse properly\n\nThis HTML, parsed and immediately printed out, results in:\n\n&lt;html&gt;\n&lt;body&gt;\n&lt;script type=&quot;text/javascript&quot;&gt;\n  var inside = true;\n&lt;/script&gt;\nthis should be outside.\n&lt;/body&gt;\n&lt;/html&gt;\n\nResults:\n\n&lt;html&gt; \n&lt;head&gt; \n&lt;/head&gt; \n&lt;body&gt; \n &lt;script type=&quot;text/javascript&quot;&gt; \n  var inside = true;\n\nthis should be outside.\n\n&lt;/script&gt; \n&lt;/body&gt; \n&lt;/html&gt;\n\nNote how \"this should be outside\" ends up inside the &lt;script&gt; tag, instead of following it.  From what I can tell, this only happens to data-only tags.",
+      "group": "held-out",
+      "changed_methods": [
+        "java:method:org.jsoup.parser.Parser#parseStartTag()"
+      ],
+      "changed_classes": [],
+      "changed_tests": [
+        "ParserTest"
+      ],
+      "main_methods": 375
+    }
+  ],
+  "dropped": [
+    {
+      "id": "spring-petclinic#326",
+      "reason": "pull request or issue not found"
+    },
+    {
+      "id": "spring-petclinic#101",
+      "reason": "pull request or issue not found"
+    },
+    {
+      "id": "spring-petclinic-microservices#564",
+      "reason": "pull request or issue not found"
+    },
+    {
+      "id": "spring-petclinic-microservices#165",
+      "reason": "pull request or issue not found"
+    },
+    {
+      "id": "start.spring.io#2223",
+      "reason": "pull request or issue not found"
+    },
+    {
+      "id": "start.spring.io#2150",
+      "reason": "pull request or issue not found"
+    },
+    {
+      "id": "start.spring.io#1638",
+      "reason": "pull request or issue not found"
+    },
+    {
+      "id": "start.spring.io#1379",
+      "reason": "pull request or issue not found"
+    },
+    {
+      "id": "start.spring.io#946",
+      "reason": "pull request or issue not found"
+    },
+    {
+      "id": "spring-framework-petclinic#193",
+      "reason": "pull request or issue not found"
+    },
+    {
+      "id": "d4j-Gson-2",
+      "reason": "pull request or issue not found"
+    }
+  ]
+}

@@ -1,0 +1,850 @@
+{
+  "model": "ollama:qwen3:14b",
+  "summary": {
+    "all": {
+      "cases": 26,
+      "hit": "18/26",
+      "class_hit": "21/26",
+      "located": "15/26",
+      "located_class": "19/26",
+      "mean_coverage": 0.0258,
+      "mean_test_recall": 0.6222,
+      "cases_with_changed_tests": 15
+    },
+    "group=dev": {
+      "cases": 16,
+      "hit": "13/16",
+      "class_hit": "14/16",
+      "located": "11/16",
+      "located_class": "12/16",
+      "mean_coverage": 0.0226,
+      "mean_test_recall": 0.7916,
+      "cases_with_changed_tests": 8
+    },
+    "group=held-out": {
+      "cases": 10,
+      "hit": "5/10",
+      "class_hit": "7/10",
+      "located": "4/10",
+      "located_class": "7/10",
+      "mean_coverage": 0.0309,
+      "mean_test_recall": 0.4286,
+      "cases_with_changed_tests": 7
+    },
+    "source=defects4j": {
+      "cases": 14,
+      "hit": "11/14",
+      "class_hit": "13/14",
+      "located": "10/14",
+      "located_class": "12/14",
+      "mean_coverage": 0.0276,
+      "mean_test_recall": 0.8333,
+      "cases_with_changed_tests": 10
+    },
+    "source=spring-app": {
+      "cases": 12,
+      "hit": "7/12",
+      "class_hit": "8/12",
+      "located": "5/12",
+      "located_class": "7/12",
+      "mean_coverage": 0.0236,
+      "mean_test_recall": 0.2,
+      "cases_with_changed_tests": 5
+    }
+  },
+  "cases": [
+    {
+      "id": "spring-petclinic#1752",
+      "source": "spring-app",
+      "group": "held-out",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 6,
+      "main_methods": 88,
+      "coverage": 0.0682,
+      "tests_changed": [],
+      "tests_listed_of_changed": [],
+      "test_recall": null,
+      "size": "looks small",
+      "locations": [
+        "org.springframework.samples.petclinic.owner.PetController#processUpdateForm(Owner,Pet,BindingResult,RedirectAttributes)",
+        "POST /owners/{ownerId}/pets/{petId}/edit",
+        "org.springframework.samples.petclinic.owner.Owner#addPet(Pet)",
+        "org.springframework.samples.petclinic.owner.PetController#findOwner(int)",
+        "org.springframework.samples.petclinic.owner.PetController#findPet(int,Integer)"
+      ],
+      "changed_methods": [
+        "org.springframework.samples.petclinic.owner.PetController#processUpdateForm(Owner,Pet,BindingResult,RedirectAttributes)"
+      ],
+      "seconds": 0.7
+    },
+    {
+      "id": "spring-petclinic#207",
+      "source": "spring-app",
+      "group": "held-out",
+      "hit": true,
+      "class_hit": true,
+      "located": false,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 4,
+      "main_methods": 90,
+      "coverage": 0.0444,
+      "tests_changed": [],
+      "tests_listed_of_changed": [],
+      "test_recall": null,
+      "size": "looks small",
+      "locations": [
+        "org.springframework.samples.petclinic.owner.PetController#initOwnerBinder(WebDataBinder)",
+        "org.springframework.samples.petclinic.owner.PetController#processCreationForm(Owner,Pet,BindingResult,ModelMap)",
+        "POST /owners/{ownerId}/pets/new",
+        "POST /owners/{ownerId}/pets/{petId}/edit",
+        "org.springframework.samples.petclinic.owner.OwnerController#processFindForm(Owner,BindingResult,Map<String,Object>)"
+      ],
+      "changed_methods": [
+        "org.springframework.samples.petclinic.owner.PetController#processUpdateForm(Pet,BindingResult,Owner,ModelMap)"
+      ],
+      "seconds": 0.6
+    },
+    {
+      "id": "spring-petclinic#110",
+      "source": "spring-app",
+      "group": "held-out",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 5,
+      "main_methods": 152,
+      "coverage": 0.0329,
+      "tests_changed": [],
+      "tests_listed_of_changed": [],
+      "test_recall": null,
+      "size": "looks big",
+      "locations": [
+        "org.springframework.samples.petclinic.web.PetValidator#validate(Object,Errors)",
+        "org.springframework.samples.petclinic.web.PetController#processUpdateForm(Pet,Owner,BindingResult,ModelMap)",
+        "POST /owners/{ownerId}/pets/{petId}/edit",
+        "org.springframework.samples.petclinic.model.Pet#birthDate",
+        "org.springframework.samples.petclinic.web.PetController#initUpdateForm(int,ModelMap)"
+      ],
+      "changed_methods": [
+        "org.springframework.samples.petclinic.web.OwnerController#processUpdateOwnerForm(Owner,int,BindingResult)",
+        "org.springframework.samples.petclinic.web.PetController#processUpdateForm(Pet,Owner,BindingResult,ModelMap)"
+      ],
+      "seconds": 0.9
+    },
+    {
+      "id": "spring-petclinic#108",
+      "source": "spring-app",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": false,
+      "located_class": false,
+      "fallback_locations": false,
+      "high_methods": 9,
+      "main_methods": 152,
+      "coverage": 0.0592,
+      "tests_changed": [],
+      "tests_listed_of_changed": [],
+      "test_recall": null,
+      "size": "looks small",
+      "locations": [
+        "POST /owners/{ownerId}/edit",
+        "org.springframework.samples.petclinic.model.Person#setFirstName(String)",
+        "org.springframework.samples.petclinic.repository.jdbc.JdbcOwnerRepositoryImpl#save(Owner)",
+        "org.springframework.samples.petclinic.repository.OwnerRepository#findByLastName(String)",
+        "org.springframework.samples.petclinic.repository.springdatajpa.SpringDataOwnerRepository#findByLastName(String)"
+      ],
+      "changed_methods": [
+        "org.springframework.samples.petclinic.web.OwnerController#processUpdateOwnerForm(Owner,BindingResult)"
+      ],
+      "seconds": 0.6
+    },
+    {
+      "id": "spring-petclinic#92",
+      "source": "spring-app",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 4,
+      "main_methods": 150,
+      "coverage": 0.0267,
+      "tests_changed": [],
+      "tests_listed_of_changed": [],
+      "test_recall": null,
+      "size": "looks small",
+      "locations": [
+        "org.springframework.samples.petclinic.repository.jdbc.JdbcVisitRepositoryImpl#findByPetId(Integer)",
+        "org.springframework.samples.petclinic.repository.jdbc.JdbcVisitRowMapper#mapRow(ResultSet,int)",
+        "org.springframework.samples.petclinic.repository.jdbc.JdbcVisitRepositoryImpl#JdbcVisitRepositoryImpl(DataSource)"
+      ],
+      "changed_methods": [
+        "org.springframework.samples.petclinic.repository.jdbc.JdbcVisitRepositoryImpl#findByPetId(Integer)",
+        "org.springframework.samples.petclinic.repository.jdbc.JdbcVisitRowMapper#mapRow(ResultSet,int)"
+      ],
+      "seconds": 0.5
+    },
+    {
+      "id": "start.spring.io#2271",
+      "source": "spring-app",
+      "group": "held-out",
+      "hit": false,
+      "class_hit": false,
+      "located": false,
+      "located_class": false,
+      "fallback_locations": false,
+      "high_methods": 3,
+      "main_methods": 581,
+      "coverage": 0.0052,
+      "tests_changed": [
+        "LdapUnboundIdBuildCustomizerTests"
+      ],
+      "tests_listed_of_changed": [],
+      "test_recall": 0.0,
+      "size": "can't tell",
+      "locations": [
+        "io.spring.start.site.extension.dependency.AddTestStartersBuildCustomizer#isBootStarter(Dependency)",
+        "io.spring.start.site.extension.dependency.AddTestStartersBuildCustomizer#customize(Build)",
+        "io.spring.start.site.extension.dependency.DependencyProjectGenerationConfiguration#addTestStartersBuildCustomizer()"
+      ],
+      "changed_methods": [
+        "io.spring.start.site.extension.dependency.ldap.LdapUnboundIdBuildCustomizer#customize(Build)"
+      ],
+      "seconds": 1.4
+    },
+    {
+      "id": "start.spring.io#2263",
+      "source": "spring-app",
+      "group": "dev",
+      "hit": false,
+      "class_hit": false,
+      "located": false,
+      "located_class": false,
+      "fallback_locations": false,
+      "high_methods": 2,
+      "main_methods": 595,
+      "coverage": 0.0034,
+      "tests_changed": [],
+      "tests_listed_of_changed": [],
+      "test_recall": null,
+      "size": "looks small",
+      "locations": [
+        "io.spring.start.site.extension.dependency.springboot.SpringBootProjectGenerationConfiguration",
+        "io.spring.start.site.extension.dependency.elasticsearch.ElasticsearchProjectGenerationConfiguration#SPRING_BOOT_4_1_OR_LATER",
+        "io.spring.start.site.extension.dependency.jooq.JooqVersionProjectDescriptionCustomizer#SPRING_BOOT_4_1_OR_LATER",
+        "io.spring.start.site.project.JavaVersionProjectDescriptionCustomizer#constrainBySpringBoot(MutableProjectDescription,int,Version)",
+        "io.spring.start.site.project.JavaVersionProjectDescriptionCustomizer#customize(MutableProjectDescription)"
+      ],
+      "changed_methods": [
+        "io.spring.start.site.project.JavaVersionMapping#findMapping(Version)"
+      ],
+      "seconds": 1.1
+    },
+    {
+      "id": "start.spring.io#2120",
+      "source": "spring-app",
+      "group": "held-out",
+      "hit": false,
+      "class_hit": false,
+      "located": false,
+      "located_class": false,
+      "fallback_locations": false,
+      "high_methods": 0,
+      "main_methods": 608,
+      "coverage": 0.0,
+      "tests_changed": [
+        "TestcontainersProjectGenerationConfigurationTests"
+      ],
+      "tests_listed_of_changed": [],
+      "test_recall": 0.0,
+      "size": "looks small",
+      "locations": [
+        "io.spring.start.site.extension.dependency.testcontainers.TestContainersApplicationCodeProjectContributor#BEAN_CLASS_NAME",
+        "io.spring.start.site.extension.dependency.testcontainers.TestContainersApplicationCodeProjectContributor#DOCKER_IMAGE_NAME_CLASS_NAME",
+        "io.spring.start.site.extension.dependency.testcontainers.TestContainersApplicationCodeProjectContributor#SERVICE_CONNECTION_CLASS_NAME",
+        "io.spring.start.site.extension.dependency.testcontainers.TestContainersApplicationCodeProjectContributor#TESTCONTAINERS_CONFIGURATION_CLASS_NAME",
+        "io.spring.start.site.extension.dependency.testcontainers.TestContainersApplicationCodeProjectContributor#TEST_CONFIGURATION_CLASS_NAME"
+      ],
+      "changed_methods": [],
+      "seconds": 1.4
+    },
+    {
+      "id": "start.spring.io#1686",
+      "source": "spring-app",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 5,
+      "main_methods": 513,
+      "coverage": 0.0097,
+      "tests_changed": [
+        "SpringGrpcProjectGenerationConfigurationTests"
+      ],
+      "tests_listed_of_changed": [
+        "SpringGrpcProjectGenerationConfigurationTests"
+      ],
+      "test_recall": 1.0,
+      "size": "looks small",
+      "locations": [
+        "io.spring.start.site.extension.dependency.springgrpc.GrpcMavenBuildCustomizer#addProtobufPlugin(MavenPluginContainer,VersionProperty,VersionProperty)",
+        "io.spring.start.site.extension.dependency.springgrpc.SpringGrpcProjectGenerationConfiguration#grpcMavenBuildCustomizer(GrpcVersionResolver)",
+        "io.spring.start.site.extension.dependency.springgrpc.GrpcMavenBuildCustomizer#addVersionProperties(PropertyContainer,VersionProperty,VersionProperty)",
+        "io.spring.start.site.extension.build.maven.AnnotationProcessorExclusionBuildCustomizer#customize(MavenBuild)",
+        "io.spring.start.site.extension.dependency.springgrpc.GrpcMavenBuildCustomizer#PROTOBUF_PLUGIN_VERSION"
+      ],
+      "changed_methods": [
+        "io.spring.start.site.extension.dependency.springgrpc.GrpcMavenBuildCustomizer#addProtobufPlugin(MavenPluginContainer,VersionProperty,VersionProperty)"
+      ],
+      "seconds": 1.1
+    },
+    {
+      "id": "start.spring.io#1458",
+      "source": "spring-app",
+      "group": "held-out",
+      "hit": false,
+      "class_hit": false,
+      "located": false,
+      "located_class": false,
+      "fallback_locations": false,
+      "high_methods": 4,
+      "main_methods": 437,
+      "coverage": 0.0092,
+      "tests_changed": [
+        "PgVectorProjectGenerationConfigurationTests"
+      ],
+      "tests_listed_of_changed": [],
+      "test_recall": 0.0,
+      "size": "looks small",
+      "locations": [
+        "io.spring.start.site.container.SimpleDockerServiceResolver#postgres()",
+        "io.spring.start.site.container.SimpleDockerServiceResolver#pgvector()",
+        "io.spring.start.site.container.DockerService#accept(ComposeService.Builder)",
+        "io.spring.start.site.container.ServiceConnections.ServiceConnection#dockerService"
+      ],
+      "changed_methods": [
+        "io.spring.start.site.extension.dependency.postgresql.PgVectorProjectGenerationConfiguration#pgvectorComposeFileCustomizer(DockerServiceResolver)",
+        "io.spring.start.site.extension.dependency.postgresql.PostgresqlProjectGenerationConfiguration#postgresqlComposeFileCustomizer(DockerServiceResolver)"
+      ],
+      "seconds": 1.2
+    },
+    {
+      "id": "start.spring.io#1377",
+      "source": "spring-app",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 2,
+      "main_methods": 410,
+      "coverage": 0.0049,
+      "tests_changed": [],
+      "tests_listed_of_changed": [],
+      "test_recall": null,
+      "size": "can't tell",
+      "locations": [
+        "io.spring.start.site.extension.dependency.zipkin.ZipkinProjectGenerationConfiguration#oracleServiceConnectionsCustomizer(DockerServiceResolver)",
+        "io.spring.start.site.extension.dependency.oracle.OracleProjectGenerationConfiguration#oracleServiceConnectionsCustomizer(DockerServiceResolver,ProjectDescription)",
+        "io.spring.start.site.extension.dependency.oracle.OracleProjectGenerationConfiguration"
+      ],
+      "changed_methods": [
+        "io.spring.start.site.extension.dependency.zipkin.ZipkinProjectGenerationConfiguration#oracleServiceConnectionsCustomizer(DockerServiceResolver)"
+      ],
+      "seconds": 0.9
+    },
+    {
+      "id": "start.spring.io#1217",
+      "source": "spring-app",
+      "group": "held-out",
+      "hit": false,
+      "class_hit": true,
+      "located": false,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 7,
+      "main_methods": 356,
+      "coverage": 0.0197,
+      "tests_changed": [
+        "TestcontainersProjectGenerationConfigurationTests"
+      ],
+      "tests_listed_of_changed": [],
+      "test_recall": 0.0,
+      "size": "looks small",
+      "locations": [
+        "io.spring.start.site.StartApplication#main(String[])",
+        "io.spring.start.site.extension.dependency.testcontainers.JavaTestContainersApplicationCodeProjectContributor#configureServiceConnection(JavaTypeDeclaration,ServiceConnection)",
+        "io.spring.start.site.extension.dependency.testcontainers.GroovyTestContainersApplicationCodeProjectContributor#configureServiceConnection(GroovyTypeDeclaration,ServiceConnection)",
+        "io.spring.start.site.extension.dependency.testcontainers.JavaTestContainersApplicationCodeProjectContributor#usingSpecificContainer(String,String,String,boolean)",
+        "io.spring.start.site.extension.dependency.testcontainers.KotlinTestContainersApplicationCodeProjectContributor#usingSpecificContainer(String,String,String,boolean)"
+      ],
+      "changed_methods": [
+        "io.spring.start.site.extension.dependency.testcontainers.GroovyTestContainersApplicationCodeProjectContributor#contributeCode(GroovySourceCode)",
+        "io.spring.start.site.extension.dependency.testcontainers.JavaTestContainersApplicationCodeProjectContributor#contributeCode(JavaSourceCode)",
+        "io.spring.start.site.extension.dependency.testcontainers.KotlinTestContainersApplicationCodeProjectContributor#contributeCode(KotlinSourceCode)"
+      ],
+      "seconds": 0.9
+    },
+    {
+      "id": "d4j-Lang-1",
+      "source": "defects4j",
+      "group": "held-out",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 3,
+      "main_methods": 2442,
+      "coverage": 0.0012,
+      "tests_changed": [
+        "NumberUtilsTest"
+      ],
+      "tests_listed_of_changed": [
+        "NumberUtilsTest"
+      ],
+      "test_recall": 1.0,
+      "size": "can't tell",
+      "locations": [
+        "org.apache.commons.lang3.math.NumberUtils#createLong(String)",
+        "org.apache.commons.lang3.math.NumberUtils#createInteger(String)",
+        "org.apache.commons.lang3.math.NumberUtils#createNumber(String)"
+      ],
+      "changed_methods": [
+        "org.apache.commons.lang3.math.NumberUtils#createNumber(String)"
+      ],
+      "seconds": 2.4
+    },
+    {
+      "id": "d4j-Lang-3",
+      "source": "defects4j",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 3,
+      "main_methods": 2435,
+      "coverage": 0.0012,
+      "tests_changed": [
+        "NumberUtilsTest"
+      ],
+      "tests_listed_of_changed": [
+        "NumberUtilsTest"
+      ],
+      "test_recall": 1.0,
+      "size": "can't tell",
+      "locations": [
+        "org.apache.commons.lang3.math.NumberUtils#createNumber(String)",
+        "org.apache.commons.lang3.math.NumberUtils#createBigDecimal(String)",
+        "org.apache.commons.lang3.math.NumberUtils#createBigInteger(String)"
+      ],
+      "changed_methods": [
+        "org.apache.commons.lang3.math.NumberUtils#createNumber(String)"
+      ],
+      "seconds": 2.4
+    },
+    {
+      "id": "d4j-Lang-4",
+      "source": "defects4j",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 6,
+      "main_methods": 2432,
+      "coverage": 0.0025,
+      "tests_changed": [
+        "LookupTranslatorTest"
+      ],
+      "tests_listed_of_changed": [
+        "LookupTranslatorTest"
+      ],
+      "test_recall": 1.0,
+      "size": "looks big",
+      "locations": [
+        "org.apache.commons.lang3.text.translate.LookupTranslator#translate(CharSequence,int,Writer)",
+        "org.apache.commons.lang3.StringEscapeUtils.CsvEscaper#translate(CharSequence,int,Writer)",
+        "org.apache.commons.lang3.StringEscapeUtils.CsvUnescaper#translate(CharSequence,int,Writer)",
+        "org.apache.commons.lang3.text.translate.NumericEntityUnescaper#translate(CharSequence,int,Writer)"
+      ],
+      "changed_methods": [
+        "org.apache.commons.lang3.text.translate.LookupTranslator#LookupTranslator(CharSequence[]...)",
+        "org.apache.commons.lang3.text.translate.LookupTranslator#translate(CharSequence,int,Writer)"
+      ],
+      "seconds": 2.3
+    },
+    {
+      "id": "d4j-Cli-1",
+      "source": "defects4j",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": false,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 8,
+      "main_methods": 188,
+      "coverage": 0.0426,
+      "tests_changed": [],
+      "tests_listed_of_changed": [],
+      "test_recall": null,
+      "size": "looks small",
+      "locations": [
+        "org.apache.commons.cli.CommandLine#getOptionValue(String)",
+        "org.apache.commons.cli.CommandLine#getOptionValue(char)",
+        "org.apache.commons.cli.OptionBuilder#create(char)",
+        "org.apache.commons.cli.OptionBuilder#create()"
+      ],
+      "changed_methods": [
+        "org.apache.commons.cli.CommandLine#addOption(Option)",
+        "org.apache.commons.cli.CommandLine#getOptionObject(String)",
+        "org.apache.commons.cli.CommandLine#getOptionValues(String)",
+        "org.apache.commons.cli.CommandLine#getOptions()",
+        "org.apache.commons.cli.CommandLine#hasOption(String)",
+        "org.apache.commons.cli.CommandLine#iterator()",
+        "org.apache.commons.cli.Option#hasNoValues()"
+      ],
+      "seconds": 0.8
+    },
+    {
+      "id": "d4j-Cli-2",
+      "source": "defects4j",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 7,
+      "main_methods": 191,
+      "coverage": 0.0366,
+      "tests_changed": [],
+      "tests_listed_of_changed": [],
+      "test_recall": null,
+      "size": "looks small",
+      "locations": [
+        "org.apache.commons.cli.PosixParser#process(String)",
+        "org.apache.commons.cli.PosixParser#burstToken(String,boolean)",
+        "org.apache.commons.cli.Parser#processArgs(Option,ListIterator)",
+        "org.apache.commons.cli.CommandLineParser#parse(Options,String[])"
+      ],
+      "changed_methods": [
+        "org.apache.commons.cli.PosixParser#burstToken(String,boolean)",
+        "org.apache.commons.cli.PosixParser#flatten(Options,String[],boolean)"
+      ],
+      "seconds": 0.7
+    },
+    {
+      "id": "d4j-Csv-1",
+      "source": "defects4j",
+      "group": "held-out",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 7,
+      "main_methods": 75,
+      "coverage": 0.0933,
+      "tests_changed": [
+        "CSVParserTest"
+      ],
+      "tests_listed_of_changed": [
+        "CSVParserTest"
+      ],
+      "test_recall": 1.0,
+      "size": "looks small",
+      "locations": [
+        "org.apache.commons.csv.ExtendedBufferedReader#readLine()",
+        "org.apache.commons.csv.ExtendedBufferedReader#read()",
+        "org.apache.commons.csv.ExtendedBufferedReader#lastChar"
+      ],
+      "changed_methods": [
+        "org.apache.commons.csv.ExtendedBufferedReader#read()",
+        "org.apache.commons.csv.ExtendedBufferedReader#read(char[],int,int)"
+      ],
+      "seconds": 1.4
+    },
+    {
+      "id": "d4j-Csv-2",
+      "source": "defects4j",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 6,
+      "main_methods": 107,
+      "coverage": 0.0561,
+      "tests_changed": [],
+      "tests_listed_of_changed": [],
+      "test_recall": null,
+      "size": "looks small",
+      "locations": [
+        "org.apache.commons.csv.CSVRecord#CSVRecord(String[],Map<String,Integer>,String,long)",
+        "org.apache.commons.csv.CSVRecord#get(String)",
+        "org.apache.commons.csv.CSVParser#initializeHeader(CSVFormat)",
+        "org.apache.commons.csv.CSVFormat.CSVFormatBuilder#withHeader(String...)"
+      ],
+      "changed_methods": [
+        "org.apache.commons.csv.CSVRecord#get(String)"
+      ],
+      "seconds": 1.8
+    },
+    {
+      "id": "d4j-Codec-1",
+      "source": "defects4j",
+      "group": "dev",
+      "hit": false,
+      "class_hit": false,
+      "located": false,
+      "located_class": false,
+      "fallback_locations": false,
+      "high_methods": 3,
+      "main_methods": 232,
+      "coverage": 0.0129,
+      "tests_changed": [
+        "StringEncoderAbstractTest"
+      ],
+      "tests_listed_of_changed": [],
+      "test_recall": 0.0,
+      "size": "looks small",
+      "locations": [
+        "org.apache.commons.codec.net.RFC1522Codec#decodeText(String)",
+        "org.apache.commons.codec.net.BCodec#charset",
+        "org.apache.commons.codec.net.QCodec#charset",
+        "org.apache.commons.codec.net.QuotedPrintableCodec#charset",
+        "org.apache.commons.codec.net.URLCodec#charset"
+      ],
+      "changed_methods": [
+        "org.apache.commons.codec.language.Caverphone#caverphone(String)",
+        "org.apache.commons.codec.language.DoubleMetaphone#cleanInput(String)",
+        "org.apache.commons.codec.language.Metaphone#metaphone(String)",
+        "org.apache.commons.codec.language.SoundexUtils#clean(String)"
+      ],
+      "seconds": 0.8
+    },
+    {
+      "id": "d4j-Codec-2",
+      "source": "defects4j",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 11,
+      "main_methods": 266,
+      "coverage": 0.0414,
+      "tests_changed": [
+        "Base64InputStreamTest",
+        "Base64OutputStreamTest",
+        "Base64Test"
+      ],
+      "tests_listed_of_changed": [
+        "Base64Test"
+      ],
+      "test_recall": 0.333,
+      "size": "looks small",
+      "locations": [
+        "org.apache.commons.codec.binary.Base64#encode(byte[])",
+        "org.apache.commons.codec.binary.Base64#encode(byte[],int,int)",
+        "org.apache.commons.codec.binary.Base64#encodeBase64(byte[],boolean,boolean)",
+        "org.apache.commons.codec.binary.BinaryCodec#EMPTY_BYTE_ARRAY",
+        "org.apache.commons.codec.binary.Base64#Base64(int,byte[],boolean)"
+      ],
+      "changed_methods": [
+        "org.apache.commons.codec.binary.Base64#encode(byte[],int,int)"
+      ],
+      "seconds": 0.6
+    },
+    {
+      "id": "d4j-Gson-1",
+      "source": "defects4j",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 12,
+      "main_methods": 1051,
+      "coverage": 0.0114,
+      "tests_changed": [],
+      "tests_listed_of_changed": [],
+      "test_recall": null,
+      "size": "looks big",
+      "locations": [
+        "com.google.gson.reflect.TypeToken#isAssignableFrom(Type,ParameterizedType,Map<String,Type>)",
+        "com.google.gson.TypeInfoFactory#getActualType(Type,Type,Class<?>)",
+        "com.google.gson.DefaultTypeAdapters.MapTypeAdapter#serialize(Map,Type,JsonSerializationContext)",
+        "com.google.gson.DefaultTypeAdapters.CollectionTypeAdapter#serialize(Collection,Type,JsonSerializationContext)"
+      ],
+      "changed_methods": [
+        "com.google.gson.TypeInfoFactory#getActualType(Type,Type,Class<?>)"
+      ],
+      "seconds": 1.0
+    },
+    {
+      "id": "d4j-JacksonCore-1",
+      "source": "defects4j",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 16,
+      "main_methods": 1372,
+      "coverage": 0.0117,
+      "tests_changed": [
+        "TestParserNonStandard"
+      ],
+      "tests_listed_of_changed": [
+        "TestParserNonStandard"
+      ],
+      "test_recall": 1.0,
+      "size": "looks big",
+      "locations": [
+        "com.fasterxml.jackson.core.base.ParserBase#_parseNumericValue(int)",
+        "com.fasterxml.jackson.core.base.ParserBase#_parseSlowFloatValue(int)",
+        "com.fasterxml.jackson.core.base.ParserBase#convertNumberToBigDecimal()",
+        "com.fasterxml.jackson.core.base.ParserBase#getNumberValue()",
+        "com.fasterxml.jackson.core.json.ReaderBasedJsonParser#_handleInvalidNumberStart(int,boolean)"
+      ],
+      "changed_methods": [
+        "com.fasterxml.jackson.core.base.ParserBase#convertNumberToBigDecimal()",
+        "com.fasterxml.jackson.core.io.NumberInput#parseDouble(String)",
+        "com.fasterxml.jackson.core.util.TextBuffer#contentsAsDecimal()"
+      ],
+      "seconds": 1.1
+    },
+    {
+      "id": "d4j-JacksonCore-2",
+      "source": "defects4j",
+      "group": "dev",
+      "hit": true,
+      "class_hit": true,
+      "located": true,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 27,
+      "main_methods": 1407,
+      "coverage": 0.0192,
+      "tests_changed": [
+        "TestParserErrorHandling"
+      ],
+      "tests_listed_of_changed": [
+        "TestParserErrorHandling"
+      ],
+      "test_recall": 1.0,
+      "size": "looks big",
+      "locations": [
+        "com.fasterxml.jackson.core.base.ParserBase#_parseNumericValue(int)",
+        "com.fasterxml.jackson.core.base.ParserBase#reportUnexpectedNumberChar(int,String)",
+        "com.fasterxml.jackson.core.json.ReaderBasedJsonParser#_handleInvalidNumberStart(int,boolean)",
+        "com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_handleInvalidNumberStart(int,boolean)",
+        "com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_handleUnexpectedValue(int)"
+      ],
+      "changed_methods": [
+        "com.fasterxml.jackson.core.base.ParserBase#_parseNumericValue(int)",
+        "com.fasterxml.jackson.core.base.ParserBase#_parseSlowFloatValue(int)",
+        "com.fasterxml.jackson.core.base.ParserBase#_parseSlowIntValue(int,char[],int,int)",
+        "com.fasterxml.jackson.core.base.ParserMinimalBase#_reportInvalidEOFInValue()",
+        "com.fasterxml.jackson.core.json.ReaderBasedJsonParser#_parseNumber(int)",
+        "com.fasterxml.jackson.core.json.ReaderBasedJsonParser#_parseNumber2(boolean)",
+        "com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_isNextTokenNameMaybe(int,SerializableString)",
+        "com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_isNextTokenNameYes()",
+        "com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_nextTokenNotInObject(int)",
+        "com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_parseFloatText(char[],int,int,boolean,int)",
+        "com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_parserNumber2(char[],int,boolean,int)",
+        "com.fasterxml.jackson.core.json.UTF8StreamJsonParser#_skipWSOrEnd()",
+        "com.fasterxml.jackson.core.json.UTF8StreamJsonParser#nextToken()",
+        "com.fasterxml.jackson.core.json.UTF8StreamJsonParser#parseNumberText(int)"
+      ],
+      "seconds": 1.0
+    },
+    {
+      "id": "d4j-Jsoup-1",
+      "source": "defects4j",
+      "group": "dev",
+      "hit": false,
+      "class_hit": true,
+      "located": false,
+      "located_class": false,
+      "fallback_locations": false,
+      "high_methods": 8,
+      "main_methods": 375,
+      "coverage": 0.0213,
+      "tests_changed": [
+        "ParserTest"
+      ],
+      "tests_listed_of_changed": [
+        "ParserTest"
+      ],
+      "test_recall": 1.0,
+      "size": "looks small",
+      "locations": [
+        "org.jsoup.Jsoup#parse(String)",
+        "org.jsoup.Jsoup#parseBodyFragment(String)",
+        "org.jsoup.nodes.Element#text(StringBuilder)",
+        "org.jsoup.nodes.TextNode#stripLeadingWhitespace(String)"
+      ],
+      "changed_methods": [
+        "org.jsoup.nodes.Document#normalise()",
+        "org.jsoup.nodes.Document#normalise(Element)"
+      ],
+      "seconds": 0.6
+    },
+    {
+      "id": "d4j-Jsoup-2",
+      "source": "defects4j",
+      "group": "held-out",
+      "hit": false,
+      "class_hit": true,
+      "located": false,
+      "located_class": true,
+      "fallback_locations": false,
+      "high_methods": 13,
+      "main_methods": 375,
+      "coverage": 0.0347,
+      "tests_changed": [
+        "ParserTest"
+      ],
+      "tests_listed_of_changed": [
+        "ParserTest"
+      ],
+      "test_recall": 1.0,
+      "size": "looks big",
+      "locations": [
+        "org.jsoup.parser.Parser#parse()",
+        "org.jsoup.parser.Parser#parseBodyFragment(String,String)",
+        "org.jsoup.parser.Tag#setContainDataOnly()",
+        "org.jsoup.parser.Parser#popStackToClose(Tag)",
+        "org.jsoup.parser.Tag#canContain(Tag)"
+      ],
+      "changed_methods": [
+        "org.jsoup.parser.Parser#parseStartTag()"
+      ],
+      "seconds": 0.7
+    }
+  ],
+  "failures": []
+}

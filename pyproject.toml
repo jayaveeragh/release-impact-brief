@@ -45,6 +45,7 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "S"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S603", "S607"]
+"eval/**" = ["S603", "S607"]  # git with fixed arguments and the locked-down env
 
 [tool.mypy]
 strict = true

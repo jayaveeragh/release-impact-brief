@@ -1,6 +1,7 @@
 """Command-line entry point: `rib`."""
 
 import argparse
+import json
 import sys
 from collections import Counter
 from collections.abc import Sequence
@@ -217,6 +218,29 @@ def _serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval(args: argparse.Namespace) -> int:
+    from release_impact_brief.evaluation import run
+
+    try:
+        settings = load_settings()
+    except ValueError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    session = LlmSession(make_provider(settings), settings)
+    args.db.parent.mkdir(parents=True, exist_ok=True)
+    cache = SummaryCache(args.db)
+    try:
+        report = run(args.dataset, args.out, session, cache, args.only)
+    except (LlmAuthError, LlmUnavailable) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    finally:
+        cache.close()
+    print(json.dumps(report["summary"], indent=2))
+    print(f"results: {args.out / 'results.json'}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="rib", description="release-impact-brief")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -265,6 +289,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     view.add_argument("--estimate-only", action="store_true",
                       help="print the plan and cost estimate, then stop")  # fmt: skip
     view.set_defaults(func=_summarize, view=True)
+
+    evaluate = sub.add_parser("eval", help="replay real bug fixes and score the impact brief")
+    evaluate.add_argument("dataset", type=Path, help="e.g. eval/java/dataset.json")
+    evaluate.add_argument("--out", type=Path, default=Path("eval/java"), help="results folder")
+    evaluate.add_argument("--only", help="run one case id")
+    evaluate.add_argument("--db", type=Path, default=Path(".rib/facts.sqlite"), help="answer cache")
+    evaluate.set_defaults(func=_eval)
 
     serve = sub.add_parser("serve", help="run the web app on this machine (127.0.0.1 only)")
     serve.add_argument("--port", type=int, default=8765)

@@ -39,6 +39,8 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 - 2026-11-01 — spring-projects/spring-petclinic @ `500158f732419217507c7656904b8e6aa1bcc0d6`: 132 files, 1373 KB, 50 `.java` — measured with `rib fetch` — active
 - 2026-11-01 — spring-petclinic/spring-petclinic-microservices @ `e8b747ab522721076cacb5cf688eb8a54ba8c5c9`: 200 files, 2512 KB, 64 `.java` — measured with `rib fetch` — active
 - 2026-11-01 — Fetch limits (20,000 files, 200 MB, 1 MB per file, 120 s) are about 100x the test repos — arbitrary, never measured beyond these two repos — active
+- 2026-11-26 — Java evaluation, `ollama:qwen3:14b`, 26 cases, issue text only: hit 18/26 (dev 13/16, held-out 5/10; Defects4J 11/14, Spring apps 7/12), class hit 21/26, model picks a changed method 15/26, mean 2.6% (median 1.9%) of main methods marked high, test recall 0.62 over 15 cases with changed tests (1.0 on 7 of 8 hits) — measured with `rib eval eval/java/dataset.json` — active
+- 2026-11-26 — Evaluation run time: 13–22 s per case cold (fetch + analyse + one model call), ~8 min for 26; a re-run with cached answers ~1 min — measured from `rib eval` output — active
 
 ## Trade-offs and known gaps
 
@@ -65,6 +67,8 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 - 2026-11-01 — Call resolution gaps (known, not handled): argument types (overloads with same argument count → `likely` to each), lambda parameters and `var` locals (type unknown), method references (`Owner::getName`), calls on class literals (`Pet.class.x()`), field initializer calls, local/anonymous classes, generic type parameters (`T`), inherited fields only one level up. Local variables are method-wide, not block-scoped (a reused name in two blocks takes the last type) — accepted for V1; all show up as `guess`/`unresolved_calls`, not as false `exact` — active
 - 2026-11-01 — Total-size limit is checked after download, not during it; the 120 s timeout is the only bound on a huge download — a GitHub API size pre-check would use one of the 60 unauthenticated requests/hour — active, revisit if it matters
 - 2026-11-01 — Tree-sitter over a full Java type resolver (e.g. JavaParser symbol solver) — the resolver is more accurate but needs a JVM; the brief puts compiler-based indexing after V1 — active
+- 2026-11-26 — Impact goes up to callers only, never down to callees: a bug seen at an entry point (`Jsoup.parse`) but fixed below it (`Document#normalise`) is missed (Jsoup-1). Following callees too would grow the high set; not changed without the owner deciding — active
+- 2026-11-26 — Location picking is the weak step: 3 of 8 misses are a plausible neighbour or the right class with the wrong method, 2 have issue text that names nothing in the code — see eval/java/results.md — active
 
 ## Surprises
 
@@ -83,6 +87,10 @@ Format: `YYYY-MM-DD — what — why — status (active / reversed / superseded)
 - 2026-11-01 — Tree-sitter starts a declaration's line range at its first annotation, not at the `class`/method keyword (e.g. `@Entity` on line 6, `class Owner` on line 8 → start_line 6) — found when my hand-counted test expectations were off by 2 — active; source links will include annotations, which is fine
 - 2026-11-01 — For a missing or private repo, GitHub asks for credentials instead of returning 404, so git fails with "terminal prompts disabled"; mapped to "Repository not found or not public." — found while testing `rib fetch` — active
 - 2026-11-01 — `uv` is not installed on the dev machine; used `venv` + `pip` instead — found at Phase 0 setup — active
+- 2026-11-26 — Held-out scored much worse than dev (5/10 vs 13/16) though nothing was tuned on dev: with 10 cases it may be chance, but the dev number shouldn't be quoted alone — found on the first full eval run — active
+- 2026-11-26 — 11 of 37 picked cases cite a pull request, not an issue (start.spring.io and the petclinics often close PRs directly), so they were dropped — found while building the dataset — active
+- 2026-11-26 — The system Python's urllib had no root certificates (CERTIFICATE_VERIFY_FAILED); the dataset script uses httpx from the venv — active
+- 2026-11-26 — git's background gc/maintenance kept writing into the temp folder while it was deleted; diff fetches run with `gc.auto=0` and `maintenance.auto=false` — active
 
 ## Dead ends
 

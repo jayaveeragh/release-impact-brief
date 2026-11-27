@@ -1,0 +1,440 @@
+{
+  "written": "2026-11-26. Spring-app fixes hand-picked from eval/java/find_candidates.py output (real bug fixes only, no upgrades or features); Defects4J: the first active bugs per project, in list order",
+  "cases": [
+    {
+      "id": "spring-petclinic#1752",
+      "source": "spring-app",
+      "repo": "spring-projects/spring-petclinic",
+      "pre_fix": "6328d2c9dc8eb2c367c6a613a1ae959c994003c7",
+      "fix": "2aa53f929d32b0d41e0fe0391b8385eabe9a3432",
+      "issue": {
+        "github": "spring-projects/spring-petclinic",
+        "number": 1752
+      },
+      "subject": "Fix pet update functionality - Fixed issue where editing a pet's type or name wasn't persisting - Updated processUpdateForm to modify existing pet instead of   adding new one - Added proper handling of existing pet update"
+    },
+    {
+      "id": "spring-petclinic#326",
+      "source": "spring-app",
+      "repo": "spring-projects/spring-petclinic",
+      "pre_fix": "6905e38c1f58b05ff148d8b840f47f64efd01415",
+      "fix": "8eb5074770eb8d943e0aee0bcdc28f62149e7344",
+      "issue": {
+        "github": "spring-projects/spring-petclinic",
+        "number": 326
+      },
+      "subject": "Fix content negotiation for /vets"
+    },
+    {
+      "id": "spring-petclinic#207",
+      "source": "spring-app",
+      "repo": "spring-projects/spring-petclinic",
+      "pre_fix": "ca2a66500fbf240e782aebb816dc7cf5c0a00fe1",
+      "fix": "61be1bac41293482506215d879da2b95961f582d",
+      "issue": {
+        "github": "spring-projects/spring-petclinic",
+        "number": 207
+      },
+      "subject": "Fix #207 set pet owner when for has an error"
+    },
+    {
+      "id": "spring-petclinic#110",
+      "source": "spring-app",
+      "repo": "spring-projects/spring-petclinic",
+      "pre_fix": "dd552f497084f240eec49e4373de5f6a2af64b0a",
+      "fix": "4aa89ae4e2b75e37aa8869b48ab1908e61af74e0",
+      "issue": {
+        "github": "spring-projects/spring-petclinic",
+        "number": 110
+      },
+      "subject": "Fix #110 owner and pet validators failed"
+    },
+    {
+      "id": "spring-petclinic#108",
+      "source": "spring-app",
+      "repo": "spring-projects/spring-petclinic",
+      "pre_fix": "3bcf84543ec586173731942a83178eed561f7d3a",
+      "fix": "dd552f497084f240eec49e4373de5f6a2af64b0a",
+      "issue": {
+        "github": "spring-projects/spring-petclinic",
+        "number": 108
+      },
+      "subject": "Fix #108 owner update"
+    },
+    {
+      "id": "spring-petclinic#101",
+      "source": "spring-app",
+      "repo": "spring-projects/spring-petclinic",
+      "pre_fix": "cb0504ee976720d6759b91b747ea4cd88f9ba9ab",
+      "fix": "4bb829cbd1026ec10dc685277467d30523c90b95",
+      "issue": {
+        "github": "spring-projects/spring-petclinic",
+        "number": 101
+      },
+      "subject": "Fix #101 display the pet type when using the JDBC profile"
+    },
+    {
+      "id": "spring-petclinic#92",
+      "source": "spring-app",
+      "repo": "spring-projects/spring-petclinic",
+      "pre_fix": "39ab8361d4fae189295af5fc4af848f4c6bd3756",
+      "fix": "91d19d17b817eb7c24593ea3a3c1ef52374b2eee",
+      "issue": {
+        "github": "spring-projects/spring-petclinic",
+        "number": 92
+      },
+      "subject": "#92 Fix column 'visits.id' not found on MySql"
+    },
+    {
+      "id": "spring-petclinic-microservices#564",
+      "source": "spring-app",
+      "repo": "spring-petclinic/spring-petclinic-microservices",
+      "pre_fix": "295fa8d5ee10f7b6daddf83a2c65f9051a87564b",
+      "fix": "aefaf7fa9eb0ab911a24c346ca0e4dc5837251c7",
+      "issue": {
+        "github": "spring-petclinic/spring-petclinic-microservices",
+        "number": 564
+      },
+      "subject": "Fix GenAI vector store loading from JAR (#564)"
+    },
+    {
+      "id": "spring-petclinic-microservices#165",
+      "source": "spring-app",
+      "repo": "spring-petclinic/spring-petclinic-microservices",
+      "pre_fix": "4e595d3395fc791974c959e4178ef383a506d672",
+      "fix": "b8bc7f2c377acac115bd8efeb19a9a9fd738faa4",
+      "issue": {
+        "github": "spring-petclinic/spring-petclinic-microservices",
+        "number": 165
+      },
+      "subject": "fix access modifier bug on VisitResource class. (#165)"
+    },
+    {
+      "id": "start.spring.io#2271",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "66dcb625ee37fc03ee5b45e7ed920815b6c5fafb",
+      "fix": "a979cc3ab398c354e3f254b687f38a2517da4f09",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 2271
+      },
+      "subject": "Avoid duplicate LDAP starter when embedding LDAP server"
+    },
+    {
+      "id": "start.spring.io#2263",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "bfd5c786bfa4d7520c19cc46feebfcf9ff5a3202",
+      "fix": "04bb870139f0126910da6b28b8e39019eb6bb7bc",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 2263
+      },
+      "subject": "Log warning instead of fail when a Boot version mapping is missing"
+    },
+    {
+      "id": "start.spring.io#2223",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "b233f2e5c975d40c807e414caa6959dd3bb6d435",
+      "fix": "1c6cfaa162182e763fe8281780e2fc9f2526304c",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 2223
+      },
+      "subject": "Fix observability dependencies for Spring Modulith"
+    },
+    {
+      "id": "start.spring.io#2150",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "4d382f0ebb1003a16bc8eac2382600c8e4462fa9",
+      "fix": "3b1f02ba7b06ea5781f3ecd1ef28aeae56c67ece",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 2150
+      },
+      "subject": "Fix Elasticsearch Testcontainers compatibility for Spring Boot 4.1"
+    },
+    {
+      "id": "start.spring.io#2120",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "c81076cdc29b43bc49c766b1e407858d6e322429",
+      "fix": "fa1503b742957d3ce0bd0f3d2db27ebb1fb541dc",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 2120
+      },
+      "subject": "Use artifact id as fallback to generate the application name"
+    },
+    {
+      "id": "start.spring.io#1638",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "8cba64af977d49fd191b81bdf9f4a90b8615463c",
+      "fix": "ae46fa80606125330867bab07d2796dd5097b8ea",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 1638
+      },
+      "subject": "Remove duplicate JTE dependency when using the JTE starter"
+    },
+    {
+      "id": "start.spring.io#1686",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "1f305a0d1241fb630a8d28c59cb9817c92577b07",
+      "fix": "7f436b34f784d825969520c638c2b8035034744b",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 1686
+      },
+      "subject": "Fix gRPC Maven configuration"
+    },
+    {
+      "id": "start.spring.io#1458",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "cd5d86dd5d5d0a063ada72bfe78362ba8fbf9cc2",
+      "fix": "977b165435f7cd1b3d268398a05974d925df56cb",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 1458
+      },
+      "subject": "Don't duplicate Postgres databases"
+    },
+    {
+      "id": "start.spring.io#1379",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "54db5915183a47e82fc8c74cb5ad9dd6efeb6883",
+      "fix": "42dfa46f73a519cf412fb751274c118f86d8be15",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 1379
+      },
+      "subject": "Fix package name for the \"Oracle Free\" Testcontainers module"
+    },
+    {
+      "id": "start.spring.io#1377",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "7342695f1defb8362df4c5e9491c069fe16fbc09",
+      "fix": "2723265373417f27c31aeb8d6bbc65963b2160d7",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 1377
+      },
+      "subject": "Fix bean name of Zipkin Service Connections support"
+    },
+    {
+      "id": "start.spring.io#1217",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "f66c41837a607ac22103bd64b5df085a5b8e8e3d",
+      "fix": "eb4173c942bf8ced2978f41204923cd6694eae52",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 1217
+      },
+      "subject": "Fix visibility of Test Application class"
+    },
+    {
+      "id": "start.spring.io#946",
+      "source": "spring-app",
+      "repo": "spring-io/start.spring.io",
+      "pre_fix": "5a5a0105c11eacd020abaa5416ca01a8cf559db7",
+      "fix": "cd0fdbd448f3a0194476c2fb38c98c5abb5a4309",
+      "issue": {
+        "github": "spring-io/start.spring.io",
+        "number": 946
+      },
+      "subject": "Fix implicit dependencies with multiple predicates"
+    },
+    {
+      "id": "spring-framework-petclinic#193",
+      "source": "spring-app",
+      "repo": "spring-petclinic/spring-framework-petclinic",
+      "pre_fix": "7949bd94b6772c99d07e08f6c14da9a5199cac52",
+      "fix": "5f85c993c0c7ed7bd023bc87ef03399ee114e49b",
+      "issue": {
+        "github": "spring-petclinic/spring-framework-petclinic",
+        "number": 193
+      },
+      "subject": "Fix #193 Removing namedParameterJdbcTemplate in constructor params"
+    },
+    {
+      "id": "d4j-Lang-1",
+      "source": "defects4j",
+      "repo": "apache/commons-lang",
+      "pre_fix": "396afc3e4693cfee182efe582455f2d97058c068",
+      "fix": "d1a45e9738de5b3e299bb51e987565dcce55fee6",
+      "issue": {
+        "jira": "LANG-747"
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-Lang-3",
+      "source": "defects4j",
+      "repo": "apache/commons-lang",
+      "pre_fix": "64cfee77e333d0c31a0fde0abe6dac3d97b0f078",
+      "fix": "8a1042959df80c06dbfa83896594caa8e20ff9d6",
+      "issue": {
+        "jira": "LANG-693"
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-Lang-4",
+      "source": "defects4j",
+      "repo": "apache/commons-lang",
+      "pre_fix": "cd91a4f2cd0ced1178e8fd1f49229196eb88094c",
+      "fix": "0cdc976684efcf478397b68c1d54cefc87bb92c9",
+      "issue": {
+        "jira": "LANG-882"
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-Cli-1",
+      "source": "defects4j",
+      "repo": "apache/commons-cli",
+      "pre_fix": "8f46f467a33ace44ccd9f394910940b6c48a3827",
+      "fix": "b0e1b80b6d4a10a9c9f46539bc4c7a3cce55886e",
+      "issue": {
+        "jira": "CLI-13"
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-Cli-2",
+      "source": "defects4j",
+      "repo": "apache/commons-cli",
+      "pre_fix": "b0e1b80b6d4a10a9c9f46539bc4c7a3cce55886e",
+      "fix": "2ff9573ffb08dd52ec3a55a49f2d77a1e94efbdf",
+      "issue": {
+        "jira": "CLI-51"
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-Csv-1",
+      "source": "defects4j",
+      "repo": "apache/commons-csv",
+      "pre_fix": "0833f45bffd40f44ba6f294d84e9bac8a9ba0a37",
+      "fix": "de1838ea067f3fbc4c7c21b9eeae077c739ecb73",
+      "issue": {
+        "jira": "CSV-75"
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-Csv-2",
+      "source": "defects4j",
+      "repo": "apache/commons-csv",
+      "pre_fix": "5744ee8a1698687fe4acc0c269cbbbb1e234b06d",
+      "fix": "a0d975933d6fe9eb5f359088de43508c1d3109bf",
+      "issue": {
+        "jira": "CSV-96"
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-Codec-1",
+      "source": "defects4j",
+      "repo": "apache/commons-codec",
+      "pre_fix": "9c0cabead7cf075308b11362172ae1a48d41321c",
+      "fix": "52d82d1dfff8c2b2ded9d843e0b03017af6d747c",
+      "issue": {
+        "jira": "CODEC-65"
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-Codec-2",
+      "source": "defects4j",
+      "repo": "apache/commons-codec",
+      "pre_fix": "2f7454a01e4c2992bffc3d86137e632e80c5027f",
+      "fix": "b8c2d9d9dc9aab45f83cf49ac93cfa8546e4c08e",
+      "issue": {
+        "jira": "CODEC-77"
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-Gson-1",
+      "source": "defects4j",
+      "repo": "google/gson",
+      "pre_fix": "4413c299ea09c57b94af8647eec901554c2f5c50",
+      "fix": "c6a4f55d1a9b191dbbd958c366091e567191ccab",
+      "issue": {
+        "github": "google/gson",
+        "number": 40
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-Gson-2",
+      "source": "defects4j",
+      "repo": "google/gson",
+      "pre_fix": "10714ef0427536b679e9677f8417807e4cce017d",
+      "fix": "fe101c10bc3597d8e715a31d94d2cc0cc54b660f",
+      "issue": {
+        "github": "google/gson",
+        "number": 719
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-JacksonCore-1",
+      "source": "defects4j",
+      "repo": "FasterXML/jackson-core",
+      "pre_fix": "a9e5c9f99bcc16d734251f682758004a3ecc3a1b",
+      "fix": "b40ac81d4a81736e2b7536b14db4ad070b598d2e",
+      "issue": {
+        "github": "FasterXML/jackson-core",
+        "number": 98
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-JacksonCore-2",
+      "source": "defects4j",
+      "repo": "FasterXML/jackson-core",
+      "pre_fix": "098ece8564ed5d37f483c3bfb45be897ed8974cd",
+      "fix": "38d6e35d1f1a9b48193804925517500de8efee1f",
+      "issue": {
+        "github": "FasterXML/jackson-core",
+        "number": 105
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-Jsoup-1",
+      "source": "defects4j",
+      "repo": "jhy/jsoup",
+      "pre_fix": "77add7946ea5bca622b1f4f654f97e62f6db1e95",
+      "fix": "27a52f90a25699bebe23ff1ff94d6db361fdb11d",
+      "issue": {
+        "github": "jhy/jsoup",
+        "number": 23
+      },
+      "subject": ""
+    },
+    {
+      "id": "d4j-Jsoup-2",
+      "source": "defects4j",
+      "repo": "jhy/jsoup",
+      "pre_fix": "27a52f90a25699bebe23ff1ff94d6db361fdb11d",
+      "fix": "bb4ead7c350695c1ed3c52d028090da4d4cecd1e",
+      "issue": {
+        "github": "jhy/jsoup",
+        "number": 22
+      },
+      "subject": ""
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-11-24
+Last updated: 2026-11-26
 
 ## Where we are
 
@@ -56,13 +56,24 @@ Done: reviewed and committed by the owner (5d4c3e5).
 
 Phase 5 done criterion met: the branch maps for three hand-checked petclinic endpoints (POST /owners/new, GET /owners, POST /owners/{ownerId}/pets/new) match the hand-written answer key — branch lines, kinds, drivers, exits, returns, throws, validation fields, the custom validator and input roles (`test_petclinic_branch_maps_match_hand_written_answer_key`).
 
+## Phase 7: Release impact brief (plan approved 2026-11-26)
+
+| Step | State |
+|---|---|
+| 1. Bug input; candidate locations (retrieval shortlist, the model picks with reasons, validated); user confirms / adds by search | done (next commit) |
+| 2. Deterministic traversal: callers (incl. overrides), endpoints, branches in changed methods and conditions reading the changed call's result or field, entities / relations / repositories, services calling in, flows, related tests | done (next commit) |
+| 3. High / low by explainable rules; size signal with reasons; "couldn't see" list | done (next commit) |
+| 4. One-page brief with cited explanation, impact overlay on the diagram, print and Markdown export | done (next commit) |
+
+Seeded check: three petclinic bugs (owner search, future birth date, visits on the wrong pet) match the hand-written expectations (`test_seeded_petclinic_briefs_match_the_hand_written_expectations`). Done when the owner would bring a petclinic brief to a meeting — **waiting for the owner's review**.
+
 ## Phase 6: Chat (plan approved 2026-11-15)
 
 | Step | State |
 |---|---|
-| 1. Retrieval: question + page context -> numbered snippets of real source (names, branch conditions, calls, summaries, synonyms; endpoint context brings handler, callees, branch map); kept read-only clone in `.rib/clones/` | done (next commit) |
-| 2. Answers: structured output, every statement cites snippet ids; uncited statements removed and listed; `not_settled` for what the code can't decide; cached | done (next commit) |
-| 3. Chat panel on the overview, module and endpoint pages; paid models ask first | done (next commit) |
+| 1. Retrieval: question + page context -> numbered snippets of real source (names, branch conditions, calls, summaries, synonyms; endpoint context brings handler, callees, branch map); kept read-only clone in `.rib/clones/` | done (acdd951) |
+| 2. Answers: structured output, every statement cites snippet ids; uncited statements removed and listed; `not_settled` for what the code can't decide; cached | done (acdd951) |
+| 3. Chat panel on the overview, module and endpoint pages; paid models ask first | done (acdd951) |
 
 Phase 6 done criterion met: on 10 hand-written petclinic questions every statement shown cites existing lines (20 statements, 0 removed) and 10/10 answers cite the hand-marked code — `tests/test_chat_eval.py` with the local model (details in PROJECT_NOTES).
 
@@ -83,7 +94,7 @@ Phase 2 done criterion met: both petclinic repos are classified correctly with t
 
 1. Check CI on GitHub → Actions for the latest push.
 2. `.rib/facts.sqlite` rebuilds itself when the schema changes, and `rib` re-extracts every run: no more `rm -rf .rib`.
-3. Next: owner reviews Phase 6 (chat panel on any page), commits; Phase 7 (release impact brief) needs a plan approved first.
+3. Next: owner reviews Phase 7 (open a view → "Write a release impact brief"), commits; Phase 8 (evaluation on ~30 real fixes, then the Python adapter) needs a plan approved first.
 
 Identity check for commits: run `git config user.email` (not `--global`) inside the repo; it must show the jayaveeragh noreply address.
 

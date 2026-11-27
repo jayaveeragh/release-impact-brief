@@ -10,6 +10,9 @@ GET  /api/views/{name}/branches?endpoint=<id>   branch map of one endpoint (fact
 POST /api/views/{name}/flows {module, confirm?} LLM-chosen flows of one module, validated;
                                      a paid model first answers with the estimate
 POST /api/views/{name}/chat {question, context, confirm?}  answer from cited code (read-only)
+GET  /api/views/{name}/search?q=     facts to add as impact locations, by name
+POST /api/views/{name}/impact/candidates {description, area?, fix?, confirm?}
+POST /api/views/{name}/impact/brief {description, area?, fix?, locations, confirm?}
 
 No secrets are ever returned: settings stay on the server.
 """
@@ -28,16 +31,30 @@ from release_impact_brief.branches import branch_map
 from release_impact_brief.chat import ask, chat_request
 from release_impact_brief.clones import ensure_clone
 from release_impact_brief.fetch import FetchError
+from release_impact_brief.impact import (
+    analyze_impact,
+    bug_text,
+    candidates_request,
+    explain,
+    explain_request,
+    pick_candidates,
+    search_facts,
+    to_markdown,
+)
 from release_impact_brief.llm import (
     CostUnknown,
     LlmAuthError,
     LlmError,
+    LlmRequest,
+    LlmSession,
     LlmUnavailable,
     SpendingCapExceeded,
 )
 from release_impact_brief.summaries import SummaryCache
 from release_impact_brief.views import flows_request, generate_module_flows
 from release_impact_brief.web.jobs import JobRunner
+
+_LLM_ERRORS = (LlmAuthError, LlmUnavailable, LlmError, SpendingCapExceeded, CostUnknown)
 
 # owner__repo@<12 hex>: no slashes or leading dots, so a name can't leave the views folder
 _VIEW_NAME = re.compile(r"^[A-Za-z0-9][\w.-]*__[A-Za-z0-9][\w.-]*@[0-9a-f]{12}$")
@@ -50,6 +67,14 @@ class AnalysisIn(BaseModel):
 
 class FlowsIn(BaseModel):
     module: str
+    confirm: bool = False
+
+
+class BugIn(BaseModel):
+    description: str
+    area: str = ""
+    fix: str = ""
+    locations: list[str] = []
     confirm: bool = False
 
 
@@ -178,6 +203,64 @@ def create_app(runner: JobRunner, static_dir: Path | None) -> FastAPI:
             raise HTTPException(503, str(e)) from None
         finally:
             cache.close()
+
+    def ask_first(session: LlmSession, request: LlmRequest, confirm: bool) -> dict[str, Any] | None:
+        """With a paid model and cost control on, the estimate instead of an answer."""
+        if session.settings.cost_control and not confirm:
+            estimate = session.estimate([request])
+            if (estimate.max_usd or 0) > 0:
+                return {"needs_confirmation": True, "estimate": {
+                    "min_usd": estimate.min_usd, "max_usd": estimate.max_usd,
+                    "cap_usd": session.settings.spend_cap_usd}}  # fmt: skip
+        return None
+
+    def bug(body: BugIn) -> str:
+        if not body.description.strip() or len(body.description) > 4000:
+            raise HTTPException(400, "describe the bug (up to 4000 characters)")
+        return bug_text(body.description, body.area, body.fix)
+
+    @app.get("/api/views/{name}/search")
+    def search(name: str, q: str) -> list[dict[str, Any]]:
+        return search_facts(facts_of(load(name)), q)
+
+    @app.post("/api/views/{name}/impact/candidates")
+    def candidates(name: str, body: BugIn) -> dict[str, Any]:
+        text, view = bug(body), load(name)
+        facts, session = facts_of(view), runner.session()
+        request, _ = candidates_request(facts, view, text)
+        if (wait := ask_first(session, request, body.confirm)) is not None:
+            return wait
+        cache = SummaryCache(runner.db)
+        try:
+            return pick_candidates(facts, view, text, session, cache)
+        except _LLM_ERRORS as e:
+            raise HTTPException(503, str(e)) from None
+        finally:
+            cache.close()
+
+    @app.post("/api/views/{name}/impact/brief")
+    def brief(name: str, body: BugIn) -> dict[str, Any]:
+        text, view = bug(body), load(name)
+        if not body.locations:
+            raise HTTPException(400, "confirm at least one location first")
+        facts, session = facts_of(view), runner.session()
+        known = {n.id for n in facts.nodes}
+        if unknown := [loc for loc in body.locations if loc not in known]:
+            raise HTTPException(400, f"unknown location(s): {', '.join(unknown[:3])}")
+        result = analyze_impact(facts, view, body.locations)
+        if (wait := ask_first(session, explain_request(result, text), body.confirm)) is not None:
+            return wait
+        cache = SummaryCache(runner.db)
+        try:
+            result["explanation"] = explain(result, view, text, session, cache)
+        except _LLM_ERRORS as e:  # the brief stands without the explanation
+            result["explanation"] = {"summary": [], "what_to_test": [], "removed": [],
+                                     "error": str(e)}  # fmt: skip
+        finally:
+            cache.close()
+        result["bug"] = text
+        result["markdown"] = to_markdown(result, view, text)
+        return result
 
     if static_dir is not None and static_dir.is_dir():
         app.mount("/", StaticFiles(directory=static_dir, html=True), name="ui")

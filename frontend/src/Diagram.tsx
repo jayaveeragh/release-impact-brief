@@ -25,12 +25,18 @@ function GroupBox({ data }: NodeProps<Box>) {
 
 const nodeTypes = { fact: FactBox, group: GroupBox };
 
-export function Diagram({ section, facts, onSelect }: {
+export function Diagram({ section, facts, onSelect, highlight }: {
   section: ArchitectureSection;
   facts: Record<string, FactInfo>;
   onSelect: (factId: string) => void;
+  highlight?: Set<string>;
 }) {
-  const graph = useMemo(() => buildGraph(section, facts), [section, facts]);
+  const graph = useMemo(() => {
+    const g = buildGraph(section, facts);
+    if (!highlight) return g;
+    return { ...g, nodes: g.nodes.map((n) => n.type === "group" ? n
+      : { ...n, className: highlight.has(n.id) ? "hit" : "dim" }) };
+  }, [section, facts, highlight]);
   const [laid, setLaid] = useState<Graph | null>(null);
   useEffect(() => {
     let live = true;
@@ -46,6 +52,8 @@ export function Diagram({ section, facts, onSelect }: {
         edges={laid.edges}
         nodeTypes={nodeTypes}
         fitView
+        fitViewOptions={highlight && highlight.size > 0
+          ? { nodes: [...highlight].map((id) => ({ id })), padding: 0.4, maxZoom: 1.2 } : undefined}
         minZoom={0.1}
         nodesConnectable={false}
         onNodeClick={(_, node) => node.data.factId && onSelect(node.data.factId)}

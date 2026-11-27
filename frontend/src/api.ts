@@ -158,6 +158,28 @@ export interface ChatAnswer {
 
 export type ChatContext = { kind: "repo" } | { kind: "module" | "endpoint"; id: string };
 
+export interface Located2 { id: string; kind: string; label: string; file: string | null; line: number | null }
+export interface Candidate extends Located2 { score?: number; reason?: string }
+export interface ImpactItem extends Located2 {
+  ref: string; item: string; reason: string; level?: "high" | "low"; distance?: number;
+  confidence?: string; path?: string[]; condition?: string;
+}
+export interface Statement { text: string; cites: string[] }
+export interface Brief {
+  bug: string;
+  locations: Located2[];
+  size: { value: "looks small" | "looks big" | "can't tell"; reasons: string[] };
+  high: ImpactItem[];
+  low: ImpactItem[];
+  tests: ImpactItem[];
+  couldnt_see: string[];
+  highlight: string[];
+  counts: { endpoints: number; callers: number; tests: number };
+  explanation: { summary: Statement[]; what_to_test: Statement[]; removed: string[]; error?: string };
+  markdown: string;
+}
+export interface Bug { description: string; area: string; fix: string }
+
 export interface NeedsConfirmation {
   needs_confirmation: true;
   estimate: { min_usd: number; max_usd: number; cap_usd: number };
@@ -188,6 +210,15 @@ export const api = {
   chat: (name: string, question: string, context: ChatContext, confirm = false) =>
     call<ChatAnswer | NeedsConfirmation>(`/api/views/${encodeURIComponent(name)}/chat`,
       { method: "POST", body: JSON.stringify({ question, context, confirm }) }),
+  search: (name: string, q: string) =>
+    call<Candidate[]>(`/api/views/${encodeURIComponent(name)}/search?q=${encodeURIComponent(q)}`),
+  candidates: (name: string, bug: Bug, confirm = false) =>
+    call<{ picked: Candidate[]; shortlist: Candidate[] } | NeedsConfirmation>(
+      `/api/views/${encodeURIComponent(name)}/impact/candidates`,
+      { method: "POST", body: JSON.stringify({ ...bug, confirm }) }),
+  brief: (name: string, bug: Bug, locations: string[], confirm = false) =>
+    call<Brief | NeedsConfirmation>(`/api/views/${encodeURIComponent(name)}/impact/brief`,
+      { method: "POST", body: JSON.stringify({ ...bug, locations, confirm }) }),
   flows: (name: string, module: string, confirm = false) =>
     call<ModuleFlows | NeedsConfirmation>(`/api/views/${encodeURIComponent(name)}/flows`,
       { method: "POST", body: JSON.stringify({ module, confirm }) }),
@@ -206,6 +237,7 @@ export const routes = {
     `#/view/${encodeURIComponent(name)}/endpoint/${encodeURIComponent(id)}`,
   module: (name: string, id: string) =>
     `#/view/${encodeURIComponent(name)}/module/${encodeURIComponent(id)}`,
+  impact: (name: string) => `#/view/${encodeURIComponent(name)}/impact`,
 };
 
 /** The innermost module (`build:module:<dir>`) whose folder holds `file`. */

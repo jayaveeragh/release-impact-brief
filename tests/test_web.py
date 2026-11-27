@@ -184,3 +184,25 @@ def test_chat_answers_from_a_kept_clone(
     assert any(s["file"].endswith("Hello.java") for s in answer["sources"])
     assert calls == [("https://github.com/acme/shop", SHA)]
     assert c.post(f"/api/views/{view}/chat", json={"question": " "}).status_code == 400
+
+
+def test_impact_flow(tmp_path: Path, repo: Path) -> None:
+    c, view = analysed(tmp_path, repo)
+    found = c.get(f"/api/views/{view}/search", params={"q": "hello"}).json()
+    assert "java:method:shop.Hello#hello()" in [f["id"] for f in found]
+    bug = {"description": "Hello says the wrong thing", "area": "hello page"}
+    picks = c.post(f"/api/views/{view}/impact/candidates", json=bug)
+    assert picks.status_code == 200 and "shortlist" in picks.json()
+    assert c.post(f"/api/views/{view}/impact/brief", json=bug).status_code == 400  # no locations
+    bad = c.post(f"/api/views/{view}/impact/brief", json=bug | {"locations": ["java:method:x"]})
+    assert bad.status_code == 400
+    result = c.post(
+        f"/api/views/{view}/impact/brief",
+        json=bug | {"locations": ["java:method:shop.Hello#hello()"]},
+    ).json()
+    assert [i["label"] for i in result["high"] if i["item"] == "endpoint"] == ["GET /hello"]
+    assert result["size"]["value"] == "looks small"
+    assert "## High impact" in result["markdown"]
+    assert (
+        c.post(f"/api/views/{view}/impact/candidates", json={"description": " "}).status_code == 400
+    )

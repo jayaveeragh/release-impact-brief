@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { EndpointPage } from "./EndpointPage";
 import { Home } from "./Home";
+import { ImpactPage } from "./ImpactPage";
 import { ModulePage } from "./ModulePage";
 import { ViewPage } from "./ViewPage";
 
@@ -12,12 +13,14 @@ import { ViewPage } from "./ViewPage";
 type Route =
   | { page: "home" }
   | { page: "view"; name: string }
-  | { page: "endpoint" | "module"; name: string; id: string };
+  | { page: "endpoint" | "module"; name: string; id: string }
+  | { page: "impact"; name: string };
 
 function route(): Route {
   const parts = window.location.hash.replace(/^#\/?/, "").split("/");
   if (parts[0] !== "view" || !parts[1]) return { page: "home" };
   const name = decodeURIComponent(parts[1]);
+  if (parts[2] === "impact") return { page: "impact", name };
   if ((parts[2] === "endpoint" || parts[2] === "module") && parts[3]) {
     return { page: parts[2], name, id: decodeURIComponent(parts[3]) };
   }
@@ -40,7 +43,7 @@ export function App() {
   const key = JSON.stringify(current);
   return (
     <div className="app">
-      <header className="topbar">
+      <header className="topbar no-print">
         <button className="brand" onClick={() => open(null)}>Release Impact Brief</button>
         <span className="tagline">Facts first, explanations on top</span>
       </header>
@@ -48,6 +51,7 @@ export function App() {
       {current.page === "view" && <ViewPage key={key} name={current.name} />}
       {current.page === "endpoint" && <EndpointPage key={key} name={current.name} endpoint={current.id} />}
       {current.page === "module" && <ModulePage key={key} name={current.name} module={current.id} />}
+      {current.page === "impact" && <ImpactPage key={key} name={current.name} />}
     </div>
   );
 }

@@ -32,6 +32,7 @@ export function ViewPage({ name }: { name: string }) {
           <VerdictBadge label="Runtime" verdict={view.runtime_style} link={link} />
         </div>
         {view.summary && <p className="summary">{view.summary.summary}</p>}
+        <p><a className="primary-link" href={routes.impact(name)}>Write a release impact brief for a bug →</a></p>
       </section>
 
       <div className="workspace">

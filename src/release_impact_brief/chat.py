@@ -136,6 +136,25 @@ class _Index:
         return "", ""
 
 
+def _scores(ix: "_Index", facts: Extraction, text: str) -> dict[str, float]:
+    wanted = _question_terms(text)
+    scores: dict[str, float] = {}
+    for n in facts.nodes:
+        if n.kind not in _SEARCHED or "/src/test/" in f"/{n.file}":
+            continue
+        own, summary = ix.text(n)
+        score = len(wanted & _terms(own)) + 0.3 * len(wanted & _terms(summary))
+        if score > 0:
+            scores[n.id] = score
+    return scores
+
+
+def rank_facts(facts: Extraction, view: dict[str, Any], text: str) -> list[tuple[str, float]]:
+    """Main-code facts whose names and contents match the text, best first."""
+    scores = _scores(_Index(facts, view), facts, text)
+    return sorted(scores.items(), key=lambda kv: (-kv[1], kv[0]))
+
+
 _SEARCHED = (NodeKind.METHOD, NodeKind.CLASS, NodeKind.FIELD, NodeKind.ENDPOINT,
              NodeKind.ENTITY, NodeKind.DATA_STORE, NodeKind.EXTERNAL_SYSTEM)  # fmt: skip
 
@@ -171,15 +190,7 @@ def retrieve(facts: Extraction, view: dict[str, Any], checkout: Path, question: 
              context: dict[str, Any]) -> tuple[list[Snippet], str]:  # fmt: skip
     """Numbered source snippets for the question, and context text (not citable)."""
     ix = _Index(facts, view)
-    wanted = _question_terms(question)
-    scores: dict[str, float] = {}
-    for n in facts.nodes:
-        if n.kind not in _SEARCHED or "/src/test/" in f"/{n.file}":
-            continue
-        own, summary = ix.text(n)
-        score = len(wanted & _terms(own)) + 0.3 * len(wanted & _terms(summary))
-        if score > 0:
-            scores[n.id] = score
+    scores = _scores(ix, facts, question)
 
     context_lines = [f"repository: {(view.get('summary') or {}).get('summary', '')}"]
     kind = context.get("kind", "repo")
